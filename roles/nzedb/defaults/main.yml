@@ -76,7 +76,7 @@ custom_settings:
   - setting: newgroupmsgstoscan
     value: 400000
   - setting: compressedheaders
-    value: 1
+    value: 0
   - setting: catwebdl
     value: 1
   - setting: deletepasswordedrelease
