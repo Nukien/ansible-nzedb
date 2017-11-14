@@ -1,0 +1,179 @@
+---
+
+- name: Remove existing config files if force_update == true
+  file:
+    path: "{{ item }}"
+    state: absent
+  when: force_update
+  with_items:
+    - /etc/mysql/conf.d/nzedb.cnf
+    - /etc/nginx/conf.d/nzedb.conf
+    - /var/www/nzedb/www/config.php
+    - /etc/sysctl.d/60-swap.conf
+
+- name: Install tmux repositories to get tmux v2.3
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - ppa:pi-rho/dev
+
+- name: Install support packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ nzedb_packages }}"
+
+- name: Link tmux-next to tmux so regular scripts will work
+  file:
+    src: /usr/bin/tmux-next
+    path: /usr/local/bin/tmux
+    state: link
+
+- name: Set permissions on /var/lib/php/sessions
+  file:
+    path: /var/lib/php/sessions/
+    owner: www-data
+    group: www-data
+    recurse: yes
+  changed_when: false
+
+# Since the resources/covers and resources/nzb dirs probably already exist
+# we can't just clone directly into place. Have to clone elsewhere and then
+# copy into final location.
+- name: Clone nZEDb from github to temp location
+  git:
+    repo: https://github.com/nZEDb/nZEDb.git
+    dest: /var/www/nzedb.temp
+    update: no
+
+- name: Copy nZEDb into final location
+  command: /usr/bin/rsync -a /var/www/nzedb.temp/ /var/www/nzedb
+  register: nzedb_rsync
+  failed_when: nzedb_rsync.rc != 0
+  changed_when: false
+
+- name: Change ownership of /var/www/nzedb
+  file:
+    path: /var/www/nzedb
+    owner: "{{ username }}"
+    group: www-data
+    mode: "g+sw"
+    recurse: yes
+  changed_when: false
+
+- name: Copy system configuration files
+  template:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: 60-swap.conf.j2, dest: /etc/sysctl.d/60-swap.conf, mode: 'u=rw,g=srw,o-rwx' }
+  register: nzedb_swappiness
+
+- name: Reload sysctl
+  command: /sbin/sysctl --system
+  register: nzedb_sysctl_reload
+  failed_when: nzedb_sysctl_reload.rc != 0
+  changed_when: false
+  when: nzedb_swappiness | changed
+
+- name: Copy nginx configuration files
+  template:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: nzedb.conf.j2,  dest: '/etc/nginx/conf.d/nzedb.conf', mode: 'u=rwx,g=rx,o=rx' }
+  notify: Restart Nginx
+
+# Only need to reload php7.0-fpm if nzedb_php_settings.ini is changed/copied
+# and then linked in below. Meh, saves an extra task putting it here.
+- name: Copy nZEDb settings (ircscraper, php and main config.php) files
+  template:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ username }}"
+    group: www-data
+  with_items:
+    - { src: nzedb_php_settings.ini.j2, dest: /var/www/nzedb/configuration/nzedb_php_settings.ini, mode: 'u=rwx,g=srw,o=rx' }
+    - { src: ircscraper_settings.php.j2, dest: /var/www/nzedb/configuration/ircscraper_settings.php, mode: 'u=rwx,g=srw,o=rx' }
+    - { src: config.php.j2, dest: /var/www/nzedb/configuration/config.php, mode: 'u=rw,g=srw,o-rwx' }
+  notify: Restart php-fpm
+
+- name: Copy nZED config files into place
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: 'u=rwx,g+sw,o=rx'
+    owner: "{{ username }}"
+    group: www-data
+    remote_src: true
+    backup: yes
+    force: no
+  with_items:
+    - { src: /var/www/nzedb/configuration/settings.example.php, dest: /var/www/nzedb/configuration/settings.php }
+
+- name: Copy tmux config and test.php files
+  copy:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ username }}"
+    group: www-data
+  with_items:
+    - { src: tmux.sh, dest: /var/www/nzedb/misc/update/nix/tmux/powerline/powerline/themes/tmux.sh, mode: 'u=rwx,g=srw,o=rx' }
+    - { src: test.php,  dest: '/var/www/nzedb/www/test.php', mode: 'u=rwx,g+sw,o=rx' }
+
+- name: Link php settings into place
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  with_items:
+    - { src: /var/www/nzedb/configuration/nzedb_php_settings.ini, dest: /etc/php/7.0/fpm/conf.d/nzedb_php_settings.ini }
+    - { src: /var/www/nzedb/configuration/nzedb_php_settings.ini, dest: /etc/php/7.0/cli/conf.d/nzedb_php_settings.ini }
+  notify: Restart php-fpm
+
+- name: Disable nginx REDIRECT_STATUS in fastcgi_params
+  lineinfile:
+    path: /etc/nginx/fastcgi_params
+    regexp: 'fastcgi_param  REDIRECT_STATUS.*'
+    line: '# fastcgi_param  REDIRECT_STATUS    200;'
+    backrefs: yes
+  notify: Restart php-fpm
+
+- name: Ensure various nzb/covers/unrar paths all exist with the correct ownership
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: www-data
+    recurse: yes
+  with_items:
+    - "{{ nzbpath }}"
+    - "{{ coverspath }}"
+    - "{{ tmpunrarpath }}"
+
+- name: Install/Update nZEDb with composer - can take a while
+  composer:
+    command: install
+    working_dir: /var/www/nzedb
+  become_user: "{{ username }}"
+
+- name: Setup nZEDb database
+  include_tasks: database.yml
+
+- name: Create install.lock file to indicate full install
+  file:
+    path: /var/www/nzedb/configuration/install.lock
+    state: touch
+    owner: "{{ username }}"
+    group: www-data
+  changed_when: false
+
+- name: Setup Sphinx search
+  include_tasks: sphinx.yml

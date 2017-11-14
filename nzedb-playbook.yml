@@ -1,0 +1,30 @@
+---
+
+# Specific variables to set
+# -------------------------
+# username                  group_vars/vars
+# netname                   group_vars/vars
+# domain                    group_vars/vars
+# force_update              group_vars/vars
+
+- hosts: all
+  gather_facts: true
+  become: yes
+
+  roles:
+    - { role: tools,     tags: 'tools' }
+    - { role: powerline, tags: 'powerline' }
+    - { role: nginx,     tags: 'nginx' }
+    - { role: mariadb,   tags: 'mariadb' }
+    - { role: composer,  tags: 'composer' }
+    - { role: nzedb,     tags: 'nzedb' }
+    - { role: vim,       tags: 'vim' }
+    - { role: tmux,      tags: 'tmux' }
+
+  post_tasks:
+    # Restarting SSH may cause a connection loss if port 22 is now disabled
+    - name: Restart SSH
+      systemd:
+        name: ssh
+        state: restarted
+    

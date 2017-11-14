@@ -1,0 +1,7 @@
+*.swp
+*.retry
+vault
+vim
+tmux
+dick.sh
+group_vars/dicks/*

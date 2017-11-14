@@ -1,0 +1,113 @@
+---
+
+- block:
+  - name: Install vim repository for updated powerline
+    apt_repository: 
+      repo: ppa:jonathonf/vim
+      state: present
+      update_cache: yes
+  
+  - name: Install powerline
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - git
+      - powerline
+      - fonts-powerline
+    notify: Update fonts
+  
+  - name: Install Powerline fonts repo
+    git:
+      repo: https://github.com/powerline/fonts.git
+      dest: /usr/src/powerline-fonts
+      update: no
+  
+  # Note: install.sh below creates this dir too, but being sure ...
+  - name: Create Powerline fonts directory
+    file:
+      path: /usr/share/fonts/powerline
+      state: directory
+  
+    #    regexp: 'font_dir="\$HOME/.local/share/fonts"'
+  - name: Change install.sh to point to /usr/share/fonts/powerline
+    replace:
+      dest: /usr/src/powerline-fonts/install.sh
+      regexp: 'font_dir="\$HOME/.local/share/fonts"'
+      replace: 'font_dir="/usr/share/fonts/powerline"'
+  
+  - name: Copy Powerline fonts
+    command: /usr/src/powerline-fonts/install.sh
+    args:
+      chdir: "/usr/src/powerline-fonts"
+      creates: "/usr/share/fonts/powerline/Hack-Bold.ttf"
+    register: PowerlineFonts_installed
+    notify: Update fonts
+  
+  - name: Copy PC Screen Fonts to /usr/share/consolefonts
+    shell: cp -a /usr/src/powerline-fonts/Terminus/PSF/ter*.gz /usr/share/consolefonts
+    args:
+      creates: /usr/share/consolefonts/ter-powerline-v12n.psf.gz
+  
+  - name: Enable ter-powerline-v16n console font
+    blockinfile:
+      dest: /etc/default/console-setup
+      insertafter: EOF
+      marker: "#----- {mark} Ansible managed for Console font"
+      block: |
+        #
+        # Using powerline font
+        FONT='ter-powerline-v16n.psf.gz'
+        #
+  
+  - name: Install Awesome Patched Fonts
+    git:
+      repo: https://github.com/gabrielelana/awesome-terminal-fonts
+      dest: /usr/src/awesome-terminal-fonts
+      update: no
+  
+  - name: Create Awesome fonts directory
+    file:
+      path: /usr/share/fonts/awesome
+      state: directory
+  
+  - name: Copy Awesome fonts
+    shell: cp -a /usr/src/awesome-terminal-fonts/build/*.ttf /usr/share/fonts/awesome
+    args:
+      creates: /usr/share/fonts/awesome/devicons-regular.ttf
+    notify: Update fonts
+  
+  - name: Copy Awesome font config
+    shell: cp -a /usr/src/awesome-terminal-fonts/config/10-symbols.conf /etc/fonts/conf.d
+    args:
+      creates: /etc/fonts/conf.d/10-symbols.conf
+    notify: Update fonts
+  
+  - name: Install PragmataPro font
+    get_url:
+      url: http://redlegion.org/font/PragmataPro.ttf
+      dest: /usr/share/fonts/awesome
+    notify: Update fonts
+
+  # block
+  become_user: root
+
+- name: Create Powerline configs dir in /home/{{ username }}/.config/powerline
+  file:
+    path: /home/{{ username }}/.config/powerline
+    state: directory
+
+- name: Copy default Powerline configs to local user {{ username }}
+  shell: cp -ar /usr/share/powerline/config_files/* /home/{{ username }}/.config/powerline
+  args:
+    creates: /home/{{ username }}/.config/powerline/colors.json
+
+# Would need to replace "powerline" with "powerine-client" everywhere
+# https://github.com/kovidgoyal/powerline-daemon
+#- name: Start Powerline daemon
+#  systemd:
+#    name: powerline-daemon
+#    enabled: yes
+#    state: restarted
+#    user: yes
+#  become: no

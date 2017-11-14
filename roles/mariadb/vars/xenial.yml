@@ -1,0 +1,32 @@
+---
+# vars file for hswong3i.mariadb (xenial)
+
+_apt_key: [
+  { state: "present", keyserver: "keyserver.ubuntu.com", id: "F1656F24C74CD1D8" },
+  { state: "present", keyserver: "keyserver.ubuntu.com", id: "CBCB082A1BB943DB" },
+  { state: "present", keyserver: "keyserver.ubuntu.com", id: "9334A25F8507EFA5" },
+  # { state: "present", url: "https://www.percona.com/downloads/RPM-GPG-KEY-percona" },
+]
+_apt_repository: [
+  { state: "absent", repo: "ppa:ondrej/mysql-5.7" },
+  { state: "present", repo: "deb [arch=amd64,i386,ppc64el] http://ftp.osuosl.org/pub/mariadb/repo/10.1/ubuntu xenial main" },
+  { state: "present", repo: "deb http://repo.percona.com/apt xenial main" },
+]
+_apt: [
+  { state: "absent", name: "mariadb-client" },
+  { state: "absent", name: "mariadb-client-10.0" },
+  { state: "absent", name: "mariadb-client-core-10.0" },
+  { state: "absent", name: "mariadb-server" },
+  { state: "absent", name: "mariadb-server-10.0" },
+  { state: "absent", name: "mariadb-server-core-10.0" },
+  { state: "absent", name: "mysql-client" },
+  { state: "absent", name: "mysql-server" },
+  { state: "latest", name: "libdbd-mysql-perl" },
+  { state: "latest", name: "mariadb-client-10.1" },
+  { state: "latest", name: "mariadb-client-core-10.1" },
+  { state: "latest", name: "mariadb-server-10.1" },
+  { state: "latest", name: "mariadb-server-core-10.1" },
+  { state: "latest", name: "percona-xtrabackup" },
+  { state: "latest", name: "python-mysqldb" },
+]
+# { state: "latest", name: "automysqlbackup" },

@@ -1,0 +1,49 @@
+---
+
+# Force a complete cluster restart
+do_restart: false
+
+mysql_root_pass: "{{ vault_mysql_root_pass | default('rCWeI5bMvnuhQuEX') }}"
+
+mysql_basedir: "/usr"
+mysql_bind_address: "0.0.0.0"
+
+mysql_timezone: "America/New_York"
+
+mysql_character_set_server: "utf8"
+# mysql_character_set_server: "utf8mb4"
+
+mysql_collation_server: "utf8_general_ci"
+# mysql_collation_server: "utf8mb4_general_ci"
+
+mysql_default_character_set: "utf8"
+# mysql_default_character_set: "utf8mb4"
+
+mysql_datadir: "/var/lib/mysql"
+mysql_expire_logs_days: "16"
+mysql_innodb_autoinc_lock_mode: "2"
+mysql_innodb_buffer_pool_size: "256M"
+mysql_innodb_doublewrite: "1"
+mysql_innodb_file_format: "barracuda"
+mysql_innodb_file_per_table: "1"
+mysql_innodb_flush_log_at_trx_commit: "2"
+mysql_innodb_large_prefix: "1"
+mysql_innodb_locks_unsafe_for_binlog: "1"
+mysql_key_buffer_size: "256M"
+mysql_lc_messages_dir: "/usr/share/mysql"
+mysql_log_error: "/var/log/mysql/error.log"
+mysql_max_allowed_packet: "128M"
+mysql_max_binlog_size: "128M"
+mysql_max_connections: "128"
+mysql_myisam_recover_options: "BACKUP"
+mysql_nice: "0"
+mysql_pid_file: "/var/run/mysqld/mysqld.pid"
+mysql_port: "3306"
+mysql_query_cache_limit: "8M"
+mysql_query_cache_size: "32M"
+mysql_socket: "/var/run/mysqld/mysqld.sock"
+mysql_table_open_cache: "512"
+mysql_thread_cache_size: "8"
+mysql_thread_stack: "256K"
+mysql_tmpdir: "/tmp"
+mysql_user: "mysql"

@@ -1,0 +1,5 @@
+---
+
+- name: Update fonts
+  command: fc-cache -f /usr/share/fonts
+  become: true

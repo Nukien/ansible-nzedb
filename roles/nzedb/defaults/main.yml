@@ -1,0 +1,183 @@
+---
+
+#
+# It's probably a good idea to keep your secret information in an ansible
+# vault, so they're not out there for all to see.  Create an ansible vault
+# file and fill it with all the variable below beginning with "vault_"
+#
+# vault_nntp_username: nzedbuser
+# vault_nntp_password: soopersecret
+#   :
+#   :
+#
+# Or you can just fill this in with the correct values - up to you.
+#
+
+# Set swappiness - we really don't want our nZEDb swapping much
+swappiness: 10
+
+########## NNTP server configuration
+nntp_username: "{{ vault_nntp_username | default('george') }}"
+nntp_password: "{{ vault_nntp_password | default('george') }}"
+nntp_server: news.supernews.com
+nntp_port: 443
+nntp_sslenabled: true
+nntp_socket_timeout: 120
+
+########## IRC Scraper configuration
+irc_username: "{{ vault_irc_username | default('george') }}"
+irc_nickname: "{{ vault_irc_nickname | default('george') }}"
+irc_realname: "{{ vault_irc_realname | default('george') }}"
+irc_password: "{{ vault_irc_password | default('george') }}"
+irc_server: "{{ vault_irc_server | default('irc.synirc.net') }}"
+irc_port: "{{ vault_irc_port | default('6697') }}"
+irc_tls: true
+
+########## File path locations
+nzbpath: /var/www/nzedb/resources/nzb/
+coverspath: /var/www/nzedb/resources/covers/
+tmpunrarpath: /var/www/nzedb/resources/tmp/unrar/
+
+########## API keys
+apikey_amazon_associate: "{{ vault_apikey_amazon_associate | default(omit) }}"
+apikey_amazon_private: "{{ vault_apikey_amazon_private | default(omit) }}"
+apikey_amazon_public: "{{ vault_apikey_amazon_public | default(omit) }}"
+apikey_anidb: "{{ vault_apikey_anidb | default(omit) }}"
+apikey_fanarttv: "{{ vault_apikey_fanarttv | default(omit) }}"
+apikey_giantbomb: "{{ vault_apikey_giantbomb | default(omit) }}"
+apikey_rotten: "{{ vault_apikey_rotten | default(omit) }}"
+apikey_tmdb: "{{ vault_apikey_tmdb | default(omit) }}"
+apikey_trakttv: "{{ vault_apikey_trakttv | default(omit) }}"
+apikey_trakttv_client: "{{ vault_apikey_trakttv_client | default(omit) }}"
+
+########## Mysql configs
+nzedb_mysql_dbname: nzedb
+nzedb_mysql_pass: fcrnjmiervwn
+
+# innodb buffer pool size - defaults to 3/4 of ram available
+innodb_buffer_pool_size: "{{ (ansible_memtotal_mb * 0.7) | int | abs }}M"
+# innodb_buffer_pool_size: 21g
+innodb_buffer_pool_instances: 18
+innodb_additional_mem_pool_size: 20M
+
+# myisam tuning
+key_buffer_size: "{{ (ansible_memtotal_mb * 0.15) | int | abs }}M"
+# key_buffer_size: 2700M
+
+########## Custom settings table entries.  You'll need to know the setting name and
+########## the possible values.  See the settings table for more information.
+custom_settings:
+  - setting: lookuppar2
+    value: 1
+  - setting: lookupnfo
+    value: 1
+  - setting: checkpasswordedrar
+    value: 1
+  - setting: newgroupmsgstoscan
+    value: 400000
+  - setting: compressedheaders
+    value: 1
+  - setting: catwebdl
+    value: 1
+  - setting: deletepasswordedrelease
+    value: 1
+  - setting: deletepossiblerelease
+    value: 1
+  - setting: miscotherretentionhours
+    value: 1680
+  - setting: mischashedretentionhours
+    value: 1680
+  - setting: maxxxxprocessed
+    value: 1000
+  - setting: maxaddprocessed
+    value: 1000
+  - setting: maximdbprocessed
+    value: 1000
+  - setting: maxmusicprocessed
+    value: 2000
+  - setting: maxnfoprocessed
+    value: 5000
+  - setting: maxnzbsprocessed
+    value: 1000
+  - setting: maxrageprocessed
+    value: 1000
+  - setting: processjpg
+    value: 1
+  - setting: processthumbnails
+    value: 1
+  - setting: maxaddprocessed
+    value: 500
+  - setting: newgroupmsgstoscan
+    value: 400000
+
+tmux_settings:
+  - setting: backfill
+    value: 1
+  - setting: backfill_order
+    value: 2
+  - setting: binaries
+    value: 1
+  - setting: dehash
+    value: 3
+  - setting: fix_crap_opt
+    value: All (except wmv_all)
+  - setting: fix_names
+    value: 1
+  - setting: post
+    value: 3
+  - setting: post_amazon
+    value: 1
+  - setting: post_non
+    value: 1
+  - setting: running
+    value: 1
+  - setting: releases
+    value: 1
+  - setting: run_ircscraper
+    value: 1
+
+########## Choose which groups to activate. Also set backfill enabled or not, and how
+########## many days back to backfill
+groups_activate:
+  - name: alt.binaries.multimedia
+    backfill: 1
+    targetdays: 30
+  - name: alt.binaries.multimedia.classic-films
+    backfill: 1
+    targetdays: 30
+  - name: alt.binaries.multimedia.scifi
+    backfill: 1
+    targetdays: 30
+
+nzedb_packages:
+  - apache2-utils
+  - apparmor-utils
+  - bc
+  - build-essential
+  - ffmpeg
+  - git
+  - iotop
+  - lame
+  - libav-tools
+  - mediainfo
+  - mytop
+  - p7zip-full
+  - percona-toolkit
+  - python-dateutil
+  - python-mysqldb
+  - python-pip
+  - python-pkg-resources
+  - python-setuptools
+  - python-six
+  - python-socketpool
+  - python-tz
+  - python3-dateutil
+  - python3-mysqldb
+  - python3-pkg-resources
+  - python3-pip
+  - python3-setuptools
+  - python3-six
+  - python3-socketpool
+  - python3-tz
+  - tmux-next
+  - unrar

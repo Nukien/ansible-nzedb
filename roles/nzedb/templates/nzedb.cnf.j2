@@ -1,0 +1,58 @@
+[mysqld]
+# configurations by nZEDb
+innodb_file_per_table = 1
+max_allowed_packet = 16M
+group_concat_max_len = 8192
+
+# https://gist.github.com/terwey/4723764
+innodb_flush_log_at_trx_commit   = 0
+# Per http://www.mysqlperformanceblog.com/2007/11/03/choosing-innodb_buffer_pool_size/
+innodb_flush_method              = O_DIRECT
+
+innodb_checksum_algorithm        = crc32
+
+# http://www.tocker.ca/2013/09/17/what-to-tune-in-mysql-56-after-installation.html
+# http://mysqlha.blogspot.ca/2013/05/configuring-innodb-for-mysql-56.html
+innodb_flush_neighbors           = 0
+
+# http://spamassassin.1065346.n5.nabble.com/Bayes-MySQL-and-innoDB-settings-question-td66854.html
+# http://anothermysqldba.blogspot.com/2013/05/how-to-tune-mysql-server.html
+innodb_buffer_pool_size          = {{ innodb_buffer_pool_size }}
+innodb_buffer_pool_instances     = {{ innodb_buffer_pool_instances }}
+innodb_additional_mem_pool_size  = {{ innodb_additional_mem_pool_size }}
+innodb_log_buffer_size           = 1g
+# innodb_log_file_size should be approx 25% of innodb_buffer_pool_size
+innodb_log_file_size             = 2g
+
+# Help Percona to use all available cores
+# https://dba.stackexchange.com/questions/27328/how-large-should-be-mysql-innodb-buffer-pool-size
+innodb_io_capacity = 2000
+innodb_read_io_threads = 64
+innodb_thread_concurrency = 0
+innodb_write_io_threads = 64
+
+# Releases innodb row locks as they are not needed
+# http://www.percona.com/blog/2012/08/28/differences-between-read-committed-and-repeatable-read-transaction-isolation-levels/
+transaction-isolation=READ-COMMITTED
+
+# dump/restore buffer pool, faster buffer pool warmup
+innodb_buffer_pool_dump_at_shutdown = ON
+innodb_buffer_pool_load_at_startup  = ON
+
+#
+# * Fine Tuning
+#
+key_buffer_size         = {{ key_buffer_size }}
+join_buffer_size        = 8M
+read_buffer_size        = 4M
+
+# default table_open_cache is 400
+table_open_cache        = 1000
+table_definition_cache  = 500
+
+#
+# * Logging and Replication
+#
+expire_logs_days            = 10
+
+

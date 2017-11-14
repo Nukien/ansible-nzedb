@@ -1,0 +1,70 @@
+---
+
+- name: Install apt_repository and apt-check requirements
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - python-apt
+    - software-properties-common
+    - update-notifier-common
+    - build-essential
+  check_mode: no
+
+- name: Fetch yydecode
+  unarchive:
+    src: "https://ayera.dl.sourceforge.net/project/yydecode/yydecode/{{ nzedb_yydecode_version }}/yydecode-{{ nzedb_yydecode_version }}.tar.gz"
+    dest: /usr/src/
+    remote_src: yes
+    creates: "/usr/src/yydecode-{{ nzedb_yydecode_version }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: 0755
+  
+- name: Compile yydecode
+  command: "{{ item }}"
+  args:
+    chdir: "/usr/src/yydecode-{{ nzedb_yydecode_version }}"
+    creates: "/usr/src/yydecode-{{ nzedb_yydecode_version }}/src/yydecode"
+  with_items:
+    - ./configure
+    - make
+
+- name: Create local man1 directory
+  file:
+    path: /usr/local/share/man/man1
+    state: directory
+
+- name: Link yydecode into place
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: yes
+  with_items:
+    - { src: "/usr/src/yydecode-{{ nzedb_yydecode_version }}/src/yydecode",   dest: /usr/local/bin/yydecode }
+    - { src: "/usr/src/yydecode-{{ nzedb_yydecode_version }}/doc/yydecode.1", dest: /usr/local/man/man1/yydecode.1 }
+  
+- name: Install php-yenc-extension
+  apt:
+    deb: "https://github.com/niel/php-yenc/releases/download/v{{ nzedb_yenc_version }}/php7.0-yenc_{{ nzedb_yenc_version }}_amd64.deb"
+ 
+- name: Fetch rar/unrar v{{ rar_version }}
+  unarchive:
+    src: "{{ rar_url }}"
+    remote_src: yes
+    dest: /usr/src/
+    creates: /usr/src/rar
+
+- name: Copy rar/unrar files into place
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: 0755
+    remote_src: true
+  with_items:
+    - { src: "/usr/src/rar/rar",         dest: /usr/local/bin/rar }
+    - { src: "/usr/src/rar/unrar",       dest: /usr/local/bin/unrar }
+    - { src: "/usr/src/rar/default.sfx", dest: /usr/local/lib/default.sfx }
+

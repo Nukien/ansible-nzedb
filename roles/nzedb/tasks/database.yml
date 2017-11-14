@@ -1,0 +1,208 @@
+---
+
+- name: Disable apparmor for mysql
+  command: /usr/sbin/aa-complain /usr/sbin/mysqld
+  changed_when: false
+  failed_when: false
+
+- name: Copy nZED config files for mysql
+  template:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: nzedb.cnf.j2,  dest: '/etc/mysql/conf.d/nzedb.cnf', mode: 'u=rwx,g=rx,o=rx' }
+  notify: restart mysql
+
+- name: Install timezone info into mysql
+  shell: "/usr/bin/mysql_tzinfo_to_sql /usr/share/zoneinfo/ | mysql mysql"
+  register: nzedb_timezone
+  changed_when: nzedb_timezone.rc != 0
+
+- name: Create nZEDb database
+  mysql_db:
+    name: "{{ nzedb_mysql_dbname }}"
+    state: present
+  register: nzedb_database
+
+# NOTE: Must grant privs in this order, FILE on *.*, THEN do ALL on nzedb.*
+#       Otherwise the FILE one overwrites the ALL
+- name: Grant nzedb user file access to all databases
+  mysql_user:
+    name: nzedb
+    password: "{{ nzedb_mysql_pass }}"
+    priv: '*.*:FILE'
+    state: present
+  #no_log: true
+  changed_when: false
+
+- name: Grant nzedb user full access to nZEDb database
+  mysql_user:
+    name: nzedb
+    password: "{{ nzedb_mysql_pass }}"
+    priv: '{{ nzedb_mysql_dbname }}.*:ALL'
+    state: present
+  #no_log: true
+  changed_when: false
+
+# Only do schema and dataload when we've just created an nzedb database
+- block:
+  #
+  - name: Create nZEDb database schema
+    mysql_db:
+      name: "{{ nzedb_mysql_dbname }}"
+      state: import
+      target: "{{ item }}"
+    ignore_errors: yes
+    with_items:
+      - /var/www/nzedb/resources/db/schema/mysql-ddl.sql
+      - /var/www/nzedb/resources/db/schema/mysql-data.sql
+    changed_when: false
+  
+  # "stdout_lines": [
+  #   "10-binaryblacklist.tsv", 
+  #   "10-categories.tsv", 
+  - name: Get list of nZEDb data .tsv files
+    command: ls -1 /var/www/nzedb/resources/db/schema/data
+    register: nzedb_TSV_files
+    failed_when: nzedb_TSV_files.rc != 0
+    changed_when: false
+  
+  # "table_names": "binaryblacklist categories category_regexes collection_regexes ...
+  - name: Get list of table names from .tsv files
+    set_fact:
+      nzedb_table_names: "{{ nzedb_table_names | default() }}{%if nzedb_table_names is defined %} {% endif %}{{ item | regex_replace('10-(.*).tsv', '\\1') }}"
+    with_items: "{{ nzedb_TSV_files.stdout_lines }}"
+  
+  # "stdout_lines": [
+  #   "id, groupname, regex, msgcol, optype, status, description"
+  - name: Get field names for each table datafile
+    command: "head -1 /var/www/nzedb/resources/db/schema/data/{{ item }}"
+    register: nzedb_field_names
+    with_items: "{{ nzedb_TSV_files.stdout_lines }}"
+    failed_when: nzedb_field_names.rc != 0
+    changed_when: false
+  
+  #  LOAD DATA LOCAL
+  #     INFILE "filename_to_read" IGNORE INTO TABLE `table_name` FIELDS TERMINATED BY "\t"
+  #     LINES TERMINATED BY "\r\n" IGNORE 1 LINES (field_names);
+  - name: Insert tsv file data into nZEDb database
+    shell: mysql nzedb -e "LOAD DATA LOCAL INFILE \"/var/www/nzedb/resources/db/schema/data/{{ item.0 }}\" IGNORE INTO TABLE \`{{ item.1 }}\` FIELDS TERMINATED BY \"\t\" LINES TERMINATED BY \"\r\n\" IGNORE 1 LINES ({{ item.2.stdout }});"
+    with_together:
+      - "{{ nzedb_TSV_files.stdout_lines }}"
+      - "{{ nzedb_table_names.split(' ') }}"
+      - "{{ nzedb_field_names.results | list }}"
+    register: nzedb_insert_tsv
+    failed_when: nzedb_insert_tsv.rc != 0
+    changed_when: false
+  #
+  when: nzedb_database | changed
+
+# htpasswd -nbB myName myPassword | awk -F ":" '{print $2}'
+- name: Create CRYPTEDPW version of user password
+  shell: htpasswd -nbB test {{ password }} | awk -F ":" '{print $2}'
+  register: nzedb_crypted_pass
+  no_log: true
+  failed_when: nzedb_crypted_pass.rc != 0
+  changed_when: false
+
+- name: Get main admin user id from table if it exists
+  command: /usr/bin/mysql nzedb -N -s -e "select id from users where username = '{{ username }}';"
+  register: nzedb_get_admin_id
+  failed_when: nzedb_get_admin_id.rc != 0
+  changed_when: false
+
+- name: Set admin userid id
+  set_fact:
+    admin_user_id: "{{ nzedb_get_admin_id.stdout_lines[0] | default('1') }}"
+
+#  INSERT INTO users (username, password, email, role, createddate, host, rsstoken,
+#    invites, invitedby, userseed, firstname, lastname)          
+#    VALUES (%s, %s, %s, %d, NOW(), %s, MD5(%s), %d, %s, MD5(%s), %s, %s)",
+- name: Create/update main admin user
+  command: /usr/bin/mysql nzedb -e "REPLACE INTO users (id, username, password, email, role, createddate, host, rsstoken, invites, invitedby, userseed, firstname, lastname) VALUES ('{{ admin_user_id }}', '{{ username }}', '{{ nzedb_crypted_pass.stdout | regex_escape() }}', '{{ default_mail_target }}', 2, '{{ ansible_date_time.date }} {{ ansible_date_time.time }}', '', 'a707c4e763fe1ae91e1de94355c1ef24', 1000, 'NULL', '', '{{ firstname }}', '{{ lastname }}' );"
+  register: nzedb_insert_admin_user
+  failed_when: nzedb_insert_admin_user.rc != 0
+  changed_when: false
+
+- name: Get current database patch level
+  command: /usr/bin/mysql nzedb -N -s -e "select value from settings where setting = 'sqlpatch';"
+  register: nzedb_db_current_patch
+  failed_when: nzedb_db_current_patch.rc != 0
+  changed_when: false
+
+- name: Get list of database patches
+  shell: ls -1 /var/www/nzedb/resources/db/patches/mysql | tail -1
+  register: nzedb_patches
+  failed_when: nzedb_patches.rc != 0
+  changed_when: false
+
+- name: Find final patch level from patch files
+  set_fact:
+    nzedb_db_patch_from_file: "{{ nzedb_patches.stdout | regex_replace('(\\d*)~.*\\.sql' '\\1') }}"
+
+# If database already exists but patchlevel != 0 then it's an existing database
+# So we need to compare current level with what the patchfiles are at
+- pause:
+    prompt: |
+      Current DB patch = {{ nzedb_db_current_patch.stdout }}
+      Patchfile level  = {{ nzedb_db_patch_from_file }}
+      They DON'T match - you should probably update before continuing
+  when: nzedb_db_current_patch.stdout != "0" and (nzedb_db_current_patch.stdout != nzedb_db_patch_from_file)
+
+- name: Set DB patch level, file paths and apikeys
+  command: /usr/bin/mysql nzedb -e "UPDATE settings SET value = '{{ item.value }}' WHERE setting = '{{ item.setting }}';"
+  with_items:
+    - { setting: sqlpatch,           value: "{{ nzedb_db_patch_from_file }}" }
+    - { setting: nzbpath,            value: "{{ nzbpath }}" }
+    - { setting: coverspath,         value: "{{ coverspath }}" }
+    - { setting: tmpunrarpath,       value: "{{ tmpunrarpath }}" }
+    - { setting: ffmpegpath,         value: "/usr/bin/ffmpeg" }
+    - { setting: mediainfopath,      value: "/usr/bin/mediainfo" }
+    - { setting: timeoutpath,        value: "/usr/bin/timeout" }
+    - { setting: unrarpath,          value: "/usr/local/bin/unrar" }
+    - { setting: yydecoderpath,      value: "/usr/local/bin/yydecode" }
+    - { setting: zippath,            value: "/usr/bin/7za" }
+    - { setting: amazonassociatetag, value: "{{ apikey_amazon_associate }}" }
+    - { setting: amazonprivkey,      value: "{{ apikey_amazon_private }}" }
+    - { setting: amazonpubkey,       value: "{{ apikey_amazon_public }}" }
+    - { setting: anidbkey,           value: "{{ apikey_anidb }}" }
+    - { setting: fanarttvkey,        value: "{{ apikey_fanarttv }}" }
+    - { setting: giantbombkey,       value: "{{ apikey_giantbomb }}" }
+    - { setting: tmdbkey,            value: "{{ apikey_tmdb }}" }
+    - { setting: trakttvkey,         value: "{{ apikey_trakttv }}" }
+    - { setting: trakttvclientkey,   value: "{{ apikey_trakttv_client }}" }
+  no_log: true
+  register: nzedb_update_settings
+  failed_when: nzedb_update_settings.rc != 0
+  changed_when: false
+
+- name: Set additional custom settings in database
+  command: /usr/bin/mysql nzedb -e "UPDATE settings SET value = '{{ item.value }}' WHERE setting = '{{ item.setting }}';"
+  with_items:
+    - "{{ custom_settings }}"
+  no_log: true
+  register: nzedb_custom_settings
+  failed_when: nzedb_custom_settings.rc != 0
+  changed_when: false
+
+# update groups set active = 1, backfill = 1, backfill_target = 30 where name = 'alt.binaries.multimedia.scifi';
+- name: Activate groups
+  command: /usr/bin/mysql nzedb -e "UPDATE groups SET active = 1, backfill = {{ item.backfill }}, backfill_target = {{ item.targetdays }} WHERE name = '{{ item.name }}';"
+  with_items:
+    - "{{ groups_activate }}"
+  no_log: true
+  register: nzedb_custom_groups
+  failed_when: nzedb_custom_groups.rc != 0
+  changed_when: false
+
+# update groups set active = 1, backfill = 1, backfill_target = 30 where name = 'alt.binaries.multimedia.scifi';
+- name: Set tmux settings
+  command: /usr/bin/mysql nzedb -e "UPDATE tmux SET value = '{{ item.value }}' WHERE setting = '{{ item.setting }}';"
+  with_items:
+    - "{{ tmux_settings }}"
+  no_log: true
+  register: nzedb_tmux_settings
+  failed_when: nzedb_tmux_settings.rc != 0
+  changed_when: false
+

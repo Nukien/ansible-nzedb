@@ -1,0 +1,25 @@
+
+# false -> if config file(s) exist do not replace them, just ensure that
+#          the correct lines/settings are inside
+# true  -> force new copies of config files into place and ensure correct
+#          correct lines/settings
+force_update: false
+
+# To enable iptables (not currently used)
+enable_iptables: false
+
+### Main user for nZED system #######################################
+#                                                                   #
+# This is the main user on the system                               #
+username:  "{{ vault_default_username | default('george') }}"
+password:  "{{ vault_default_password | default('password') | regex_escape() }}"
+firstname: "{{ vault_firstname | default('George') }}"
+lastname:  "{{ vault_lastname  | default('of the Jungle') }}"
+
+# Main address to receive default emails for the server.  Things like cron
+# job result emails etc. get sent to root@servername which aliases to this.
+# This is added as an entry to the aliases table
+default_mail_target: "{{ vault_default_mail_target | default(username ~ '@' ~ inventory_hostname) }}"
+#                                                                   #
+### Main user for nZED system #######################################
+

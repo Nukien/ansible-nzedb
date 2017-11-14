@@ -1,0 +1,14 @@
+---
+
+# rarsoft rar/unrar v5.5.0
+rar_version: 5.5.0
+rar_url: "http://rarlab.com/rar/rarlinux-x64-{{ rar_version }}.tar.gz"
+
+# Neil's php-yenc-extension
+# https://github.com/niel/php-yenc/releases/download/v1.3.0/php7.0-yenc_1.3.0_amd64.deb
+nzedb_yenc_version: 1.3.0
+
+# yydecode version
+# https://ayera.dl.sourceforge.net/project/yydecode/yydecode/0.2.10/yydecode-0.2.10.tar.gz
+nzedb_yydecode_version: 0.2.10
+

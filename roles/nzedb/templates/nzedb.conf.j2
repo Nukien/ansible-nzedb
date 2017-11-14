@@ -1,0 +1,49 @@
+server {
+    listen 80;
+    server_name {{ inventory_hostname }};
+
+    access_log /var/log/nginx/nzedb-access.log;
+    error_log /var/log/nginx/nzedb-error.log;
+
+    root /var/www/nzedb/www/;
+    index index.html index.htm index.php;
+
+    location ~* \.(?:css|eot|gif|gz|ico|inc|jpe?g|js|ogg|oga|ogv|mp4|m4a|mp3|png|svg|ttf|txt|woff|xml)$ {
+        expires max;
+        add_header Pragma public;
+        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
+    }
+
+    location / {
+        try_files $uri $uri/ @rewrites;
+    }
+
+    location ^~ /covers/ {
+        # This is where the nZEDb covers folder should be in.
+        root /var/www/nzedb/resources;
+    }
+
+    location @rewrites {
+        rewrite ^/([^/\.]+)/([^/]+)/([^/]+)/? /index.php?page=$1&id=$2&subpage=$3 last;
+        rewrite ^/([^/\.]+)/([^/]+)/?$ /index.php?page=$1&id=$2 last;
+        rewrite ^/([^/\.]+)/?$ /index.php?page=$1 last;
+    }
+
+    location /admin {
+    }
+
+    location /install {
+    }
+
+    location ~ \.php$ {
+        include /etc/nginx/fastcgi_params;
+        fastcgi_param  SCRIPT_FILENAME    $request_filename;
+
+        # Uncomment the following line and comment the .sock line if you want to use TCP.
+        #fastcgi_pass 127.0.0.1:9000;
+        fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+
+        # The next two lines should go in your fastcgi_params
+        fastcgi_index index.php;
+    }
+}

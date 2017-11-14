@@ -1,0 +1,1 @@
+alias cluster='mysql -B -s -N -e "show status like \"%wsrep_cluster%\";"'

@@ -1,0 +1,98 @@
+---
+
+- name: Get list of mariadb engines - checking for sphinx
+  command: /usr/bin/mysql -N -s -e "show engines;"
+  register: nzedb_sphinx_engines
+  failed_when: nzedb_sphinx_engines.rc != 0
+  changed_when: false
+
+- name: Enable Sphinx engine if necessary
+  command: /usr/bin/mysql -e "INSTALL SONAME 'ha_sphinx';"
+  register: nzedb_sphinx_install
+  failed_when: nzedb_sphinx_install.rc != 0
+  changed_when: false
+  when: "'SPHINX' not in nzedb_sphinx_engines.stdout"
+
+- name: Install sphinx repository
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - ppa:builds/sphinxsearch-rel22
+
+- name: Install sphinx
+  apt:
+    name: sphinxsearch
+    state: present
+
+- block:  # Remove sphinx data if force_update == true
+  #
+  - name: Remove existing config files if force_update == true
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/sphinxsearch/sphinx.conf
+
+  - name: Stop sphinxsearch service to remove all data
+    service:
+      name: sphinxsearch
+      state: stopped
+    ignore_errors: true
+
+  - name: Get list of Sphinx data files
+    shell: ls -1 /var/lib/sphinxsearch/data/*
+    register: nzedb_sphinx_datafiles
+    failed_when: nzedb_sphinx_datafiles.rc != 0
+    changed_when: false
+
+  - name: Remove all Sphinx data files
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ nzedb_sphinx_datafiles.stdout_lines }}"
+  #
+  when: force_update
+
+- name: Copy sphinx config files into place
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: 0755
+    remote_src: true
+    backup: yes
+  register: nzedb_sphinx_config
+  with_items:
+    - { src: "/var/www/nzedb/misc/sphinxsearch/sphinx.conf", dest: /etc/sphinxsearch/sphinx.conf }
+
+- name: Enable Sphinx in settings.php
+  lineinfile:
+    path: /var/www/nzedb/configuration/settings.php
+    regexp: ".*nZEDb_RELEASE_SEARCH_TYPE.*"
+    line: "define('nZEDb_RELEASE_SEARCH_TYPE', 2);"
+    backrefs: yes
+  register: nzedb_sphinx_update
+
+- block:  # only if config file updated or sphinx engine enabled
+  #
+  - name: Restart sphinxsearch service to use updated config file
+    service:
+      name: sphinxsearch
+      state: restarted
+  
+  - name: Create sphinx tables
+    command: /usr/bin/php /var/www/nzedb/misc/sphinxsearch/create_se_tables.php 0 9312
+    register: nzedb_sphinx_create_tables
+    failed_when: nzedb_sphinx_create_tables.rc != 0
+    changed_when: false
+  
+  - name: Populate sphinx tables
+    command: /usr/bin/php /var/www/nzedb/misc/sphinxsearch/populate_rt_indexes.php releases_rt
+    register: nzedb_sphinx_populate_tables
+    failed_when: nzedb_sphinx_populate_tables.rc != 0
+    changed_when: false
+  #
+  when: force_update or nzedb_sphinx_config | changed or nzedb_sphinx_update | changed
+

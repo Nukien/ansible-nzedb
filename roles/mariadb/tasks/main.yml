@@ -1,0 +1,266 @@
+---
+
+# In order to change the mysql root pw we need the existing one, which should
+# be available in /root/.my.cnf.  We have to check if the existing pw is
+# different from the one in {{ mysql_root_pass }} ==> remove old .my.cnf files
+#
+# If there is no /root/.my.cnf then this is a new install, and root has no
+# password.  In that case, we set use_mysql_root to blank
+#
+# Stage           DB pw needed
+# =====           ==============
+# New install     ""
+# Same root pw    -p<old password>
+# New root pw     -p<old passowrd>
+ 
+- name: Check if /root/.my.cnf already exists
+  stat:
+    path: /root/.my.cnf
+  register: root_my_cnf
+
+- name: Read existing root password from /root/.my.cnf
+  shell: fgrep password /root/.my.cnf | awk '{print $3}'
+  register: root_mysql_pw
+  when: root_my_cnf.stat.exists
+  changed_when: false
+
+- name: Set use_mysql_root password to what was found in /root/.my.cnf
+  set_fact:
+    use_mysql_root: "-p{{ root_mysql_pw.stdout }}"
+    #use_mysql_root: "{{ root_mysql_pw.stdout | default('{{ mysql_root_pass }}') }}"
+  when: root_my_cnf.stat.exists
+
+- name: Set use_mysql_root password to blank if no /root/.my.cnf
+  set_fact:
+    use_mysql_root: ""
+  when: root_my_cnf.stat.exists == false
+
+- name: Join "-p" with mysql_root_pass for comparison - need another way
+  set_fact:
+    compare_root_pass: "-p\"{{ mysql_root_pass }}\""
+
+# If the existing mysql root pass (use_mysql_root) is different from the
+# one being passed in the mysql_root_pass variable, we have to change all
+# the config files
+- name: Remove existing .my.cnf files if new mysql root password is defined
+  file:
+    path: "{{ item }}"
+    state: absent
+  when: use_mysql_root != compare_root_pass
+  with_items:
+    - /root/.my.cnf
+    - /home/{{ username }}/.my.cnf
+
+- name: Remove existing config files if force_update == true
+  file:
+    path: "{{ item }}"
+    state: absent
+  when: force_update
+  with_items:
+    - /etc/mysql/debian.cnf
+    - /root/.my.cnf
+    - /home/{{ username }}/.my.cnf
+    - /home/{{ username }}/.profile.d/mariadb_aliases
+    - /etc/mysql/conf.d/mariadb.charset.cnf
+    - /etc/mysql/conf.d/mysqld_safe_syslog.cnf
+    - /etc/mysql/my.cnf
+
+- name: include release specific variables
+  include_vars: "{{ ansible_distribution_release }}.yml"
+
+- name: Fetch mysqltuner.pl
+  git:
+    repo: https://github.com/rackerhacker/MySQLTuner-perl.git 
+    dest: /usr/src/mysqltuner
+
+- name: Link mysqltuner.pl to /usr/local/bin
+  file:
+    src: /usr/src/mysqltuner/mysqltuner.pl
+    path: /usr/local/bin/mysqltuner.pl
+    state: link
+    mode: u=rwx,g=rx,o=rx
+
+- name: Fetch tuningprimer.sh
+  get_url:
+    url: https://launchpad.net/mysql-tuning-primer/trunk/1.6-r1/+download/tuning-primer.sh 
+    dest: /usr/local/bin/tuning-primer.sh
+    mode: u=rwx,g=rx,o=rx
+
+# [MariaDB Xtradb Cluster]
+# title=MariaDB MySQL database
+# description=MariaDB MySQL replication via Galera
+# ports=4567,4568,4444/tcp accept from TINC ipaddresses
+# -A TCP -p tcp -s ${SYS_B_PUBIP} --dport 655 -j ACCEPT
+- name: Add iptables rules for MariaDB
+  blockinfile:
+    dest: /etc/iptables/rules.v4
+    insertafter: '#----- END Base iptables header config ----'
+    marker: "#----- {mark} MariaDB -----"
+    block: |
+      #
+      {% for host in play_hosts %}
+      {% if inventory_hostname_short != hostvars[host]['inventory_hostname_short'] %}
+      # Allowing traffic in from {{ host }} to {{ inventory_hostname_short }}
+      {% if enable_tinc or enable_zerotier %}
+      -A TCP -p tcp -s {{ hostvars[host].vpn_ip }} --dport 4567 -j ACCEPT
+      -A TCP -p tcp -s {{ hostvars[host].vpn_ip }} --dport 4568 -j ACCEPT
+      -A TCP -p tcp -s {{ hostvars[host].vpn_ip }} --dport 4444 -j ACCEPT
+      {% else %}
+      -A TCP -p tcp -s {{ hostvars[host]['ansible_default_ipv4'].address }} --dport 4567 -j ACCEPT
+      -A TCP -p tcp -s {{ hostvars[host]['ansible_default_ipv4'].address }} --dport 4568 -j ACCEPT
+      -A TCP -p tcp -s {{ hostvars[host]['ansible_default_ipv4'].address }} --dport 4444 -j ACCEPT
+      {% endif %}
+      {% endif %}
+      {% endfor %}
+      #
+  notify: Restore iptables rules
+  when: enable_iptables
+
+# Have to reload iptables or cluster connections will fail
+- name: run handlers
+  meta: flush_handlers
+  when: enable_iptables
+
+- name: apt-key add
+  apt_key:
+    id: "{{ item.id | default(None) or omit }}"
+    keyserver: "{{ item.keyserver | default(None) or omit }}"
+    url: "{{ item.url | default(None) or omit }}"
+    state: "{{ item.state }}"
+  with_items: "{{ _apt_key }}"
+
+- name: apt-add-repository
+  apt_repository:
+    repo: "{{ item.repo }}"
+    state: "{{ item.state }}"
+  with_items: "{{ _apt_repository }}"
+
+- name: apt-get install
+  apt:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    install_recommends: no
+  with_items: "{{ _apt }}"
+  notify: restart mysql
+
+- name: start service
+  service:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  with_items:
+    - { name: "mysql", state: "started" }
+  register: start_service_result
+  ignore_errors: yes
+
+
+# Fails here are OK if a root password has been set and force_update = true
+# /root/.my.cnf will have been deleted, so access to mysql will fail
+# use_mysql_root may be "-p<some password>" or it may be ""
+# so -p is already included in the variable, no need to specify it
+- name: disable mysql anonymous access
+  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = ''"
+  #shell: sudo -i mysql "{{ use_mysql_root | default(omit) }}" -NBe "DELETE FROM mysql.user WHERE User = ''"
+  when:
+    - start_service_result.results[0].state == "started"
+  register: disable_anonymous_access_result
+  changed_when: disable_anonymous_access_result.rc != 0
+  ignore_errors: yes
+
+- name: disable mysql root access from remote
+  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = 'root' AND Host <> 'localhost'"
+  when:
+    - start_service_result.results[0].state == "started"
+  register: disable_root_access_remote_result
+  changed_when: disable_root_access_remote_result.rc != 0
+  ignore_errors: yes
+
+- name: setup mysql debian-sys-maint password
+  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'debian-sys-maint'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
+  when:
+    - start_service_result.results[0].state == "started"
+    - mysql_root_pass is string
+  register: setup_debian_sys_maint_password_result
+  changed_when: setup_debian_sys_maint_password_result.rc != 0
+  ignore_errors: yes
+
+- name: copy templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: "etc/mysql/debian.cnf.j2", dest: "/etc/mysql/debian.cnf",  owner: "root", group: "root", mode: "0600" }
+  when:
+    - start_service_result.results[0].state == "started"
+    - mysql_root_pass is string
+    - setup_debian_sys_maint_password_result.rc == 0
+  ignore_errors: yes
+
+- name: setup mysql root password
+  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
+  when:
+#    - start_service_result.results[0].state == "started"
+    - mysql_root_pass is string
+  register: setup_root_password_result
+  changed_when: setup_root_password_result.rc != 0
+  ignore_errors: yes
+
+- name: copy templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src: "root/.my.cnf.j2", dest: "/root/.my.cnf",  owner: "root", group: "root", mode: "0600" }
+    - { src: "root/.my.cnf.j2", dest: "/home/{{ username }}/.my.cnf",  owner: "{{ username }}", group: "{{ username }}", mode: "0600" }
+  when:
+    - mysql_root_pass is string
+    #- start_service_result.results[0].state == "started"
+  ignore_errors: yes
+
+- name: Create custom config dir for systemd
+  file:
+    path: /etc/systemd/system/mariadb.service.d
+    state: directory
+
+- name: copy templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+    backup: yes
+  with_items:
+    - { src: "etc/mysql/conf.d/mariadb.charset.cnf.j2", dest: "/etc/mysql/conf.d/mariadb.charset.cnf",  owner: "root", group: "root", mode: "0644" }
+    - { src: "etc/mysql/conf.d/mysqld_safe_syslog.cnf.j2", dest: "/etc/mysql/conf.d/mysqld_safe_syslog.cnf",  owner: "root", group: "root", mode: "0644" }
+    - { src: "etc/mysql/my.cnf.j2", dest: "/etc/mysql/my.cnf",  owner: "root", group: "mysql", mode: "0640" }
+    - { src: "timezone.conf.j2", dest: "/etc/systemd/system/mariadb.service.d/timezone.conf", owner: "root", group: "root", mode: "0644" }
+  notify: Enable cluster restart
+
+- name: Enable mysql service
+  systemd:
+    name: "{{ item.name }}"
+    enabled: "{{ item.enabled }}"
+    daemon_reload: yes
+  with_items:
+    - { name: "mysql", enabled: "yes" }
+  notify: restart mysql
+
+- name: Copy .profile.d mariadb aliases
+  copy:
+    src: mariadb_aliases
+    dest: /home/{{ username }}/.profile.d/mariadb_aliases
+    owner: "{{ username }}"
+    group: "{{ username }}"
+  when:  play_hosts | length > 1
+  tags:
+    - conffiles
+
+- name: run handlers
+  meta: flush_handlers
+

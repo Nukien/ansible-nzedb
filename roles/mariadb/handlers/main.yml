@@ -1,0 +1,14 @@
+---
+
+- name: restart mysql
+  service:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  with_items:
+    - { name: "mysql", state: "restarted" }
+  when: play_hosts | length == 1
+
+# Enable a restart of the whole cluster
+- name: Enable cluster restart
+  set_fact:
+    do_restart: true

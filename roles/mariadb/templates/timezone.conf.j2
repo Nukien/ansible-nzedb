@@ -1,0 +1,5 @@
+# Set timezone to EST
+# /etc/systemd/system/mariadb.service.d/timezone.conf
+
+[Service]
+Environment="TZ={{ mysql_timezone }}"
