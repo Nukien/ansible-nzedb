@@ -2,4 +2,3 @@
 # localhost ansible_connection=local
 master.local ansible_host=192.168.2.187
 nzedb.local
-dicks ansible_host=74.219.225.13
