@@ -54,11 +54,17 @@ apikey_trakttv_client: "{{ vault_apikey_trakttv_client | default(omit) }}"
 nzedb_mysql_dbname: nzedb
 nzedb_mysql_pass: fcrnjmiervwn
 
-# innodb buffer pool size - defaults to 3/4 of ram available
+# innodb buffer pool size - defaults to about 3/4 of ram available
 innodb_buffer_pool_size: "{{ (ansible_memtotal_mb * 0.7) | int | abs }}M"
-# innodb_buffer_pool_size: 21g
-innodb_buffer_pool_instances: 18
+# Want 1g-2g per buffer pool instance
+innodb_buffer_pool_instances: "{{ (innodb_buffer_pool_size / 2000) | int | abs }}"
 innodb_additional_mem_pool_size: 20M
+# If on M.2 can use about 30000, SSD maybe 20000, with max about 30% higher ?
+# See: http://www.tocker.ca/2013/09/17/what-to-tune-in-mysql-56-after-installation.html
+innodb_io_capacity: 20000
+innodb_io_max_capacity: 30000
+# Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
+innodb_lru_scan_depth: 15000
 
 # myisam tuning
 key_buffer_size: "{{ (ansible_memtotal_mb * 0.15) | int | abs }}M"

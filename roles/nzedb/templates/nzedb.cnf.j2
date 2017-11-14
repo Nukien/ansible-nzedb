@@ -20,16 +20,31 @@ innodb_flush_neighbors           = 0
 innodb_buffer_pool_size          = {{ innodb_buffer_pool_size }}
 innodb_buffer_pool_instances     = {{ innodb_buffer_pool_instances }}
 innodb_additional_mem_pool_size  = {{ innodb_additional_mem_pool_size }}
+innodb_change_buffering = all
+innodb_max_dirty_pages_pct = 90
+
 innodb_log_buffer_size           = 1g
 # innodb_log_file_size should be approx 25% of innodb_buffer_pool_size
 innodb_log_file_size             = 2g
 
 # Help Percona to use all available cores
 # https://dba.stackexchange.com/questions/27328/how-large-should-be-mysql-innodb-buffer-pool-size
-innodb_io_capacity = 2000
-innodb_read_io_threads = 64
+innodb_io_capacity = "{{ innodb_io_capacity }}"
+innodb_io_max_capacity = "{{ innodb_max_io_capacity }}"
+# Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
+innodb_lru_scan_depth  = "{{ innodb_lru_scan_depth }}"
 innodb_thread_concurrency = 0
-innodb_write_io_threads = 64
+
+# Doing about 4 threads per core - be sure these values from ansible make sense
+# Calculation is ansible_processor_vcpus * 4
+    # ansible_processor_cores = {{ansible_processor_cores}}
+    # ansible_processor_count = {{ansible_processor_count}}
+    # ansible_processor_threads_per_core = {{ansible_processor_threads_per_core}}
+    # ansible_processor_vcpus {{ansible_processor_vcpus}}
+innodb_read_io_threads  = "{{ (ansible_processor_vcpus * 4) }}"
+innodb_write_io_threads = "{{ (ansible_processor_vcpus * 4) }}"
+# http://www.samsung.com/semiconductor/global/file/insight/2017/04/best-practices-for-mysql-with-ssds-0.pdf
+innodb_adaptive_hash_index = OFF
 
 # Releases innodb row locks as they are not needed
 # http://www.percona.com/blog/2012/08/28/differences-between-read-committed-and-repeatable-read-transaction-isolation-levels/

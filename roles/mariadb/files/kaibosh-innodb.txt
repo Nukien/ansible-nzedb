@@ -1,0 +1,32 @@
+# innodb threading
+innodb_thread_concurrency = 0
+innodb_read_io_threads = 32
+innodb_write_io_threads = 32
+innodb_purge_threads = 4   # Upped from 1 - May 16, upped to 4 Jul 17
+#
+# InnoDB Buffer Pools
+innodb_buffer_pool_size = 48G
+innodb_buffer_pool_instances = 48
+innodb_change_buffering = all
+innodb_max_dirty_pages_pct = 90
+# innodb_change_buffer_max_size = 40
+
+# InnoDB Flushing params
+innodb_flush_method = O_DIRECT     # Prevent double buffering by OS - http://www.mysqlperformanceblog.com/2007/11/03/choosing-innodb_buffer_pool_size/
+innodb_flush_log_at_trx_commit = 0 # 0= can lose last sec of updates, 1=super safe, 2=flushes 1x per sec and at trx commit
+#
+# SSD settings
+innodb_io_capacity     = 30000   # M2 has spec max wIOPS of about 280k, approx 140k at QD1 - May17 upped to 100k with optane
+innodb_io_capacity_max = 40000   # See: http://www.tocker.ca/2013/09/17/what-to-tune-in-mysql-56-after-installation.html
+innodb_lru_scan_depth  = 20000   # Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
+innodb_flush_neighbors = 0       # Based on https://mariadb.org/how-to-tune-mariadb-write-performance/
+innodb_adaptive_hash_index = OFF # http://www.samsung.com/semiconductor/global/file/insight/2017/04/best-practices-for-mysql-with-ssds-0.pdf
+# innodb_fill_factor     = 50      # http://www.samsung.com/semiconductor/global/file/insight/2017/04/best-practices-for-mysql-with-ssds-0.pdf UNKNOWN
+# innodb_read_ahead = none
+# innodb_adaptive_flushing_method = keep_average
+
+# Transaction logging
+innodb_log_group_home_dir=/mnt/optane/mysql/
+innodb_log_buffer_size=128M
+
+
