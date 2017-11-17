@@ -27,8 +27,8 @@ There are several directories that you should pre-create, to make data managemen
 For example, creating ZFS datasets might be something like
 
 ```
-zfs create -o mountpoint=/var/www/nzedb/resources/nzb` poolname/nzbs
-zfs create -o mountpoint=/var/www/nzedb/resources/covers` poolname/covers
+zfs create -o mountpoint=/var/www/nzedb/resources/nzb poolname/nzbs
+zfs create -o mountpoint=/var/www/nzedb/resources/covers poolname/covers
 echo 'tmpfs /var/www/nzedb/resources/tmp/unrar tmpfs defaults,nodev,user,nodiratime,nosuid,noatime,mode=777  0 0' >> /etc/fstab
 ```
 
@@ -78,10 +78,10 @@ Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a gen
 
 *NOTE* There are additional mysql tuning parameters to set in the nZEDb role section below.
 
-> #### Variables `roles/mariadb/defaults/main.yml`
+> ##### Variables `roles/mariadb/defaults/main.yml`
 
 > * `mysql_root_pass`  (pulls from `vault_mysql_root_pass` or has a default)
-* `mysql_timezone`
+> * `mysql_timezone`
 
 > The rest of the variables can be left to the defaults.
 
@@ -89,11 +89,11 @@ Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a gen
 
 Installs yydecode, niel's php-yenc-extension and latest unrar
 
-> #### Variables `roles/tools/defaults/main.yml`
+> ##### Variables `roles/tools/defaults/main.yml`
 
 > * `rar_version` 5.5.0
-* `nzedb_yenc_version` 1.3.0
-* `nzedb_yydecode_version` 0.2.10
+> * `nzedb_yenc_version` 1.3.0
+> * `nzedb_yydecode_version` 0.2.10
 
 ### powerline
 
@@ -111,53 +111,53 @@ Installs latest version of composer
 
 Installs nzedb, sphinxsearch, creates and populates database.
 
-> #### Variables `roles/nzedb/defaults/main.yml`
+> ##### Variables `roles/nzedb/defaults/main.yml`
 
 > **NNTP server configuration**
 
 > * `nntp_username`       (pulls from `vault_nntp_username`)
-* `nntp_password`       (pulls from `vault_nntp_password`)
-* `nntp_server`         news.supernews.com
-* `nntp_port`           443
-* `nntp_sslenabled`     true
-* `nntp_socket_timeout` 120
+> * `nntp_password`       (pulls from `vault_nntp_password`)
+> * `nntp_server`         news.supernews.com
+> * `nntp_port`           443
+> * `nntp_sslenabled`     true
+> * `nntp_socket_timeout` 120
 
 > **IRC Scraper configuration**
 
 > * `irc_username`        (pulls from `vault_irc_username`)
-* `irc_nickname`        (pulls from `vault_irc_nickname`)
-* `irc_realname`        (pulls from `vault_irc_realname`)
-* `irc_password`        (pulls from `vault_irc_password`)
-* `irc_server`          (pulls from `vault_irc_server` or defaults to _irc.synirc.net_)
-* `irc_port`            (pulls from `vault_irc_port` or defaults to 6697 for SSL)
-* `irc_tls`             true
+> * `irc_nickname`        (pulls from `vault_irc_nickname`)
+> * `irc_realname`        (pulls from `vault_irc_realname`)
+> * `irc_password`        (pulls from `vault_irc_password`)
+> * `irc_server`          (pulls from `vault_irc_server` or defaults to _irc.synirc.net_)
+> * `irc_port`            (pulls from `vault_irc_port` or defaults to 6697 for SSL)
+> * `irc_tls`             true
 
 > **File path locations**
 
 > * `nzbpath`             /var/www/nzedb/resources/nzb/
-* `coverspath`          /var/www/nzedb/resources/covers/
-* `tmpunrarpath`        /var/www/nzedb/resources/tmp/unrar/
+> * `coverspath`          /var/www/nzedb/resources/covers/
+> * `tmpunrarpath`        /var/www/nzedb/resources/tmp/unrar/
 
 > **API keys**
 
 > * `apikey_amazon_associate` (pulls from `vault_apikey_amazon_associate`)
-* `apikey_amazon_private`   (pulls from `vault_apikey_amazon_private`)
-* `apikey_amazon_public`    (pulls from `vault_apikey_amazon_public`)
-* `apikey_anidb`            (pulls from `vault_apikey_anidb`)
-* `apikey_fanarttv`         (pulls from `vault_apikey_fanarttv`)
-* `apikey_giantbomb`        (pulls from `vault_apikey_giantbomb`)
-* `apikey_tmdb`             (pulls from `vault_apikey_tmdb`)
-* `apikey_trakttv`          (pulls from `vault_apikey_trakttv`)
-* `apikey_trakttv_client`   (pulls from `vault_apikey_trakttv_client`)
+> * `apikey_amazon_private`   (pulls from `vault_apikey_amazon_private`)
+> * `apikey_amazon_public`    (pulls from `vault_apikey_amazon_public`)
+> * `apikey_anidb`            (pulls from `vault_apikey_anidb`)
+> * `apikey_fanarttv`         (pulls from `vault_apikey_fanarttv`)
+> * `apikey_giantbomb`        (pulls from `vault_apikey_giantbomb`)
+> * `apikey_tmdb`             (pulls from `vault_apikey_tmdb`)
+> * `apikey_trakttv`          (pulls from `vault_apikey_trakttv`)
+> * `apikey_trakttv_client`   (pulls from `vault_apikey_trakttv_client`)
 
 > **Mysql configs**
 
 > * `nzedb_mysql_dbname`      nzedb
-* `nzedb_mysql_pass`        fcrnjmiervwn
-* `innodb_buffer_pool_size` defaults to 0.7 of available ram
-* `innodb_buffer_pool_instances` 18
-* `innodb_additional_mem_pool_size` 20M
-* `key_buffer_size` defaults to 0.15 of available ram
+> * `nzedb_mysql_pass`        fcrnjmiervwn
+> * `innodb_buffer_pool_size` defaults to 0.7 of available ram
+> * `innodb_buffer_pool_instances` 18
+> * `innodb_additional_mem_pool_size` 20M
+> * `key_buffer_size` defaults to 0.15 of available ram
 
 > **Tmux settings**
 
