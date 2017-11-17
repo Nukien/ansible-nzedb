@@ -167,11 +167,14 @@ Installs nzedb, sphinxsearch, creates and populates database.
 
 > This is list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
 
-> ```
+```
 mysql nzedb -e "select setting,value,hint from settings where setting like '%lookuppar2%';"
 ```
 
 > **Groups to activate**
 
-> This is the list groups to activate.  You can also set whether to backfill the group, and for how many days back to go.
+> This is the list of groups to activate.  You can also set whether to backfill the group, and for how many days back to go.
 
+## Other information
+
+[Munin stats script](https://gist.github.com/ThePeePs/bdb443f62173dcdae06297b843ab2a3a)
