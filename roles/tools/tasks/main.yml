@@ -1,5 +1,14 @@
 ---
 
+- name: Ensure config dirs are there
+  file:
+    path: "/home/{{ username }}/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+  with_items:
+    - .profile.d
+
 - name: Install apt_repository and apt-check requirements
   apt:
     name: "{{ item }}"
