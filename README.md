@@ -4,7 +4,7 @@ This contains a minimal set of ansible roles to install a working nZEDb system. 
 
 ## Prerequisites
 
-The following python packages must be installed on the Ubuntu 16.04 system for ansible to be able to connect and work
+The following python packages must be installed on the target Ubuntu 16.04 system for ansible to be able to connect and work
 
 `apt-get install python-minimal python2.7 python`
 
@@ -70,7 +70,7 @@ See `group_vars/all/vars`
 
 ### nginx
 
-Simple setup of nginx and php7.0.
+Simple setup of nginx and php7.0
 
 ### mariadb
 
@@ -107,9 +107,13 @@ Installs latest version of composer
 
 > Should not need to change anything here.
 
+### sphinx
+
+Installs sphinxsearch.
+
 ### nzedb
 
-Installs nzedb, sphinxsearch, creates and populates database.
+Installs nzedb, creates and populates database.
 
 > ##### Variables `roles/nzedb/defaults/main.yml`
 
@@ -155,7 +159,7 @@ Installs nzedb, sphinxsearch, creates and populates database.
 > * `nzedb_mysql_dbname`      nzedb
 > * `nzedb_mysql_pass`        fcrnjmiervwn
 > * `innodb_buffer_pool_size` defaults to 0.7 of available ram
-> * `innodb_buffer_pool_instances` 18
+> * `innodb_buffer_pool_instances` defaults to about 2g of buffer_pool_size per instance
 > * `innodb_additional_mem_pool_size` 20M
 > * `key_buffer_size` defaults to 0.15 of available ram
 

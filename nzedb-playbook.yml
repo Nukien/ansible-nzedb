@@ -18,6 +18,7 @@
     - { role: mariadb,   tags: 'mariadb' }
     - { role: composer,  tags: 'composer' }
     - { role: nzedb,     tags: 'nzedb' }
+    - { role: sphinx,    tags: 'sphinx' }
     - { role: vim,       tags: 'vim' }
     - { role: tmux,      tags: 'tmux' }
 

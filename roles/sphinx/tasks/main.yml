@@ -1,0 +1,62 @@
+---
+
+- name: Get list of mariadb engines - checking for sphinx
+  command: /usr/bin/mysql -N -s -e "show engines;"
+  register: nzedb_sphinx_engines
+  failed_when: nzedb_sphinx_engines.rc != 0
+  changed_when: false
+
+- name: Enable Sphinx engine if necessary
+  command: /usr/bin/mysql -e "INSTALL SONAME 'ha_sphinx';"
+  register: nzedb_sphinx_install
+  failed_when: nzedb_sphinx_install.rc != 0
+  changed_when: false
+  when: "'SPHINX' not in nzedb_sphinx_engines.stdout"
+
+- name: Install sphinx repository
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - ppa:builds/sphinxsearch-rel22
+
+- name: Install sphinx
+  apt:
+    name: sphinxsearch
+    state: present
+
+- block:  # Remove sphinx data if force_update == true
+  #
+  - name: Remove existing config files if force_update == true
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/sphinxsearch/sphinx.conf
+
+  - name: Stop sphinxsearch service to remove all data
+    service:
+      name: sphinxsearch
+      state: stopped
+    ignore_errors: true
+
+  - name: Get list of Sphinx data files
+    shell: ls -1 /var/lib/sphinxsearch/data/*
+    register: nzedb_sphinx_datafiles
+    failed_when: nzedb_sphinx_datafiles.rc != 0
+    changed_when: false
+
+  - name: Remove all Sphinx data files
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ nzedb_sphinx_datafiles.stdout_lines }}"
+
+  - name: Restart sphinxsearch service
+    service:
+      name: sphinxsearch
+      state: started
+  #
+  when: force_update

@@ -3,6 +3,10 @@
 # Force a complete cluster restart
 do_restart: false
 
+# Defaulting to no tinc or zerotier for mesh networking
+enable_tinc: false
+enable_zerotier: false
+
 mysql_root_pass: "{{ vault_mysql_root_pass | default('rCWeI5bMvnuhQuEX') }}"
 
 mysql_basedir: "/usr"
