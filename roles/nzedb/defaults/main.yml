@@ -62,7 +62,7 @@ innodb_additional_mem_pool_size: 20M
 # If on M.2 can use about 30000, SSD maybe 20000, with max about 30% higher ?
 # See: http://www.tocker.ca/2013/09/17/what-to-tune-in-mysql-56-after-installation.html
 innodb_io_capacity: 20000
-innodb_io_max_capacity: 30000
+innodb_io_capacity_max: 30000
 # Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
 innodb_lru_scan_depth: 15000
 

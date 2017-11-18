@@ -30,7 +30,7 @@ innodb_log_file_size             = 2g
 # Help Percona to use all available cores
 # https://dba.stackexchange.com/questions/27328/how-large-should-be-mysql-innodb-buffer-pool-size
 innodb_io_capacity = "{{ innodb_io_capacity }}"
-innodb_io_max_capacity = "{{ innodb_io_max_capacity }}"
+innodb_io_capacity_max = "{{ innodb_io_capacity_max }}"
 # Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
 innodb_lru_scan_depth  = "{{ innodb_lru_scan_depth }}"
 innodb_thread_concurrency = 0
