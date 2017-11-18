@@ -139,7 +139,7 @@ wsrep_cluster_address = gcomm://{{ play_hosts | join(',') }}
 {% endif %}
 
 wsrep_node_name = {{ inventory_hostname_short }}
-wsrep_cluster_name = {{ domain }}_cluster
+wsrep_cluster_name = {{ domain | default('mariadb') }}_cluster
 wsrep_on = 1
 wsrep_provider = /usr/lib/galera/libgalera_smm.so
 wsrep_sst_auth = "root:{{ mysql_root_pass }}"
