@@ -27,10 +27,33 @@ There are several directories that you should pre-create, to make data managemen
 For example, creating ZFS datasets might be something like
 
 ```
+zfs create -o mountpoint=/var/www/nzedb poolname/nzedb
 zfs create -o mountpoint=/var/www/nzedb/resources/nzb poolname/nzbs
 zfs create -o mountpoint=/var/www/nzedb/resources/covers poolname/covers
-echo 'tmpfs /var/www/nzedb/resources/tmp/unrar tmpfs defaults,nodev,user,nodiratime,nosuid,noatime,mode=777  0 0' >> /etc/fstab
+
+cat > /etc/systemd/system/var-www-nzedb-resources-tmp-unrar.mount << EOF
+[Unit]
+Description=TMPFS dir for unrar for nZEDb
+DefaultDependencies=no
+Conflicts=umount.target
+After=zfs.target
+
+[Mount]
+What=tmpfs
+Where=/var/www/nzedb/resources/tmp/unrar
+Type=tmpfs
+Options=defaults,nodev,user,nodiratime,nosuid,noatime,mode=777
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable var-www-nzedb-resources-tmp-unrar.mount
 ```
+
+The ugly systemd unit is needed for the tmpfs to ensure that it doesn't mount until *after* the zfs datasets mount.  If you put an entry in `/etc/fstab` that will mount *before* the main nzedb dataset, which will prevent that dataset from mounting.  Bad things happen.
+
+If using ZFS, the above configuration has been verified to work.  The datasets mount in the correct order, and the tmpfs mounts after them.  Of course, this is just an example, you can use whatever systems and conventions you prefer for disk layout.
 
 The nzedb role will set appropriate ownership permissions.
 
@@ -165,7 +188,7 @@ Installs nzedb, creates and populates database.
 
 > **Tmux settings**
 
-> Here you can add any specific settings for Tmux that you want.  THe defaults here are fairly typical.  Unfortunately the tmux table doesn't have a description or hint field, so you'll have to look at the main Tmux Settings page on your site.
+> Here you can add any specific settings for Tmux that you want.  The defaults here are fairly typical.  Unfortunately the tmux table doesn't have a description or hint field, so you'll have to look at the main Tmux Settings page on your site.
 
 > **Custom settings**
 
