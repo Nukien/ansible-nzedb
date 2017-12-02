@@ -19,6 +19,8 @@
     - software-properties-common
     - update-notifier-common
     - build-essential
+    - git
+    - automake
   check_mode: no
 
 - name: Fetch yydecode
@@ -76,4 +78,54 @@
     - { src: "/usr/src/rar/rar",         dest: /usr/local/bin/rar }
     - { src: "/usr/src/rar/unrar",       dest: /usr/local/bin/unrar }
     - { src: "/usr/src/rar/default.sfx", dest: /usr/local/lib/default.sfx }
+
+- name: Clone par2 from github to temp location
+  git:
+    repo: https://github.com/Parchive/par2cmdline.git
+    dest: /usr/src/par2cmdline
+    update: no
+
+- name: par2 - automake
+  command: ./automake.sh
+  args:
+    chdir: /usr/src/par2cmdline
+    creates: /usr/src/par2cmdline/aclocal.m4
+  register: par2_automake
+  failed_when: par2_automake.rc != 0
+  changed_when: false
+
+- name: par2 - configure
+  command: ./configure
+  args:
+    chdir: /usr/src/par2cmdline
+    creates: /usr/src/par2cmdline/Makefile
+  register: par2_configure
+  failed_when: par2_configure.rc != 0
+  changed_when: false
+
+- name: par2 - build
+  command: make
+  args:
+    chdir: /usr/src/par2cmdline
+    creates: /usr/src/par2cmdline/par2
+  register: par2_make1
+  failed_when: par2_make1.rc != 0
+  changed_when: false
+
+- name: par2 - check
+  command: make check
+  args:
+    chdir: /usr/src/par2cmdline
+  register: par2_make_check
+  failed_when: par2_make_check.rc != 0
+  changed_when: false
+
+- name: par2 - install
+  shell: make install
+  args:
+    chdir: /usr/src/par2cmdline
+    creates: /usr/local/bin/par2
+  register: par2_make_install
+  failed_when: par2_make_install.rc != 0
+  changed_when: false
 
