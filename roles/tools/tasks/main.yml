@@ -15,12 +15,13 @@
     state: present
     update_cache: yes
   with_items:
-    - python-apt
-    - software-properties-common
-    - update-notifier-common
+    - automake
     - build-essential
     - git
-    - automake
+    - python-apt
+    - python-pip
+    - software-properties-common
+    - update-notifier-common
   check_mode: no
 
 - name: Fetch yydecode
@@ -128,4 +129,9 @@
   register: par2_make_install
   failed_when: par2_make_install.rc != 0
   changed_when: false
+
+- name: Install ps_mem
+  pip:
+    name: ps_mem
+    state: latest
 
