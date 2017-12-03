@@ -54,10 +54,11 @@ apikey_trakttv_client: "{{ vault_apikey_trakttv_client | default(omit) }}"
 nzedb_mysql_dbname: nzedb
 nzedb_mysql_pass: fcrnjmiervwn
 
-# innodb buffer pool size - defaults to about 3/4 of ram available
-innodb_buffer_pool_size: "{{ (ansible_memtotal_mb * 0.7) | int | abs }}M"
+# innodb buffer pool size - defaults to about 65% of ram available
+innodb_buffer_percent: 65
+innodb_buffer_pool_size: "{{ (ansible_memtotal_mb * innodb_buffer_percent / 100) | int | abs }}M"
 # Want 1g-2g per buffer pool instance
-innodb_buffer_pool_instances: "{{ ( (ansible_memtotal_mb * 0.7) / 2000) | int | abs }}"
+innodb_buffer_pool_instances: "{{ ( (ansible_memtotal_mb * innodb_buffer_percent / 100) / 1500) | int | abs }}"
 innodb_additional_mem_pool_size: 20M
 # If on M.2 can use about 30000, SSD maybe 20000, with max about 30% higher ?
 # See: http://www.tocker.ca/2013/09/17/what-to-tune-in-mysql-56-after-installation.html
@@ -66,9 +67,13 @@ innodb_io_capacity_max: 30000
 # Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
 innodb_lru_scan_depth: 15000
 
+# innodb_log_file_size should be approx 20-25% of innodb_buffer_pool_size
+# Since there are 2 logfiles be default, divide by 2
+innodb_log_file_size: "{{ (ansible_memtotal_mb * innodb_buffer_percent / 100 * 0.20 / 2) | int | abs }}M"
+
 # myisam tuning
 key_buffer_size: "{{ (ansible_memtotal_mb * 0.15) | int | abs }}M"
-# key_buffer_size: 2700M
+
 
 ########## Custom settings table entries.  You'll need to know the setting name and
 ########## the possible values.  See the settings table for more information.

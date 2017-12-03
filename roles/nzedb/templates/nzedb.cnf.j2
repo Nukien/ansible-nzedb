@@ -17,22 +17,28 @@ innodb_flush_neighbors           = 0
 
 # http://spamassassin.1065346.n5.nabble.com/Bayes-MySQL-and-innoDB-settings-question-td66854.html
 # http://anothermysqldba.blogspot.com/2013/05/how-to-tune-mysql-server.html
+# Total ram avaliable = {{ ansible_memtotal_mb }}M so {{ innodb_buffer_percent }}% = {{ (ansible_memtotal_mb * innodb_buffer_percent / 100) | int | abs }}M
 innodb_buffer_pool_size          = {{ innodb_buffer_pool_size }}
+# Help mysql to use all available cores
+# https://dba.stackexchange.com/questions/27328/how-large-should-be-mysql-innodb-buffer-pool-size
+# About 1-2G per innodb_buffer_pool_instance
 innodb_buffer_pool_instances     = {{ innodb_buffer_pool_instances }}
 innodb_additional_mem_pool_size  = {{ innodb_additional_mem_pool_size }}
 innodb_change_buffering = all
 innodb_max_dirty_pages_pct = 90
 
-innodb_log_buffer_size           = 1g
-# innodb_log_file_size should be approx 25% of innodb_buffer_pool_size
-innodb_log_file_size             = 2g
+innodb_log_buffer_size           = 100M
+# Total innodb_log_file_size should be approx 20-25% of innodb_buffer_pool_size
+# So total = {{ (ansible_memtotal_mb * innodb_buffer_percent / 100 * 0.20) | int | abs }}M, divided into 2 logfiles of {{ innodb_log_file_size }}
+innodb_log_file_size             = {{ innodb_log_file_size }}
 
-# Help Percona to use all available cores
-# https://dba.stackexchange.com/questions/27328/how-large-should-be-mysql-innodb-buffer-pool-size
+# If on M.2 can use about 30000, SSD maybe 20000, with max about 30% higher ?
+# See: http://www.tocker.ca/2013/09/17/what-to-tune-in-mysql-56-after-installation.html
 innodb_io_capacity = "{{ innodb_io_capacity }}"
 innodb_io_capacity_max = "{{ innodb_io_capacity_max }}"
 # Set close to iop_max - http://mysqlha.blogspot.lu/2013/05/configuring-innodb-for-mysql-56.html
 innodb_lru_scan_depth  = "{{ innodb_lru_scan_depth }}"
+
 innodb_thread_concurrency = 0
 
 # Doing about 4 threads per core - be sure these values from ansible make sense
@@ -57,6 +63,7 @@ innodb_buffer_pool_load_at_startup  = ON
 #
 # * Fine Tuning
 #
+# key_buffer_size is about 15% of total ram {{ ansible_memtotal_mb}}M
 key_buffer_size         = {{ key_buffer_size }}
 join_buffer_size        = 8M
 read_buffer_size        = 4M
