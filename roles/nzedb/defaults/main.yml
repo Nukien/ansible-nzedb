@@ -54,8 +54,9 @@ apikey_trakttv_client: "{{ vault_apikey_trakttv_client | default(omit) }}"
 nzedb_mysql_dbname: nzedb
 nzedb_mysql_pass: fcrnjmiervwn
 
-# innodb buffer pool size - defaults to about 65% of ram available
-innodb_buffer_percent: 65
+# innodb buffer pool size - defaults to about 70% of ram available
+# If less than 4G ram, default to 50%
+innodb_buffer_percent: 70
 innodb_buffer_pool_size: "{{ (ansible_memtotal_mb * innodb_buffer_percent / 100) | int | abs }}M"
 # Want 1g-2g per buffer pool instance
 innodb_buffer_pool_instances: "{{ ( (ansible_memtotal_mb * innodb_buffer_percent / 100) / 1500) | int | abs }}"

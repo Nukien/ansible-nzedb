@@ -110,7 +110,7 @@ Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a gen
 
 ### tools
 
-Installs yydecode, niel's php-yenc-extension and latest unrar
+Installs yydecode, niel's php-yenc-extension, par2 and latest unrar
 
 > ##### Variables `roles/tools/defaults/main.yml`
 
@@ -126,7 +126,7 @@ Installs powerline and several fonts to make tmux prettier
 
 Installs latest version of composer
 
-> #### Variables `roles/composer/defaults/main.yml`
+> ##### Variables `roles/composer/defaults/main.yml`
 
 > Should not need to change anything here.
 
@@ -181,18 +181,22 @@ Installs nzedb, creates and populates database.
 
 > * `nzedb_mysql_dbname`      nzedb
 > * `nzedb_mysql_pass`        fcrnjmiervwn
-> * `innodb_buffer_pool_size` defaults to 0.7 of available ram
-> * `innodb_buffer_pool_instances` defaults to about 2g of buffer_pool_size per instance
+> * `innodb_buffer_percent`   for *innodb_buffer_pool_size* - defaults to 70% of available ram
+> * `innodb_buffer_pool_instances` defaults to about 1-2g of buffer_pool_size per instance
 > * `innodb_additional_mem_pool_size` 20M
-> * `key_buffer_size` defaults to 0.15 of available ram
-
-> **Tmux settings**
-
-> Here you can add any specific settings for Tmux that you want.  The defaults here are fairly typical.  Unfortunately the tmux table doesn't have a description or hint field, so you'll have to look at the main Tmux Settings page on your site.
+> * `innodb_io_capacity`      Tuning for SSD or M.2 type storage, or lower for sata disks
+> * `innodb_io_capacity_max`  Tuning for SSD or M.2 type storage, or lower for sata disks
+> * `innodb_lru_scan_depth`   Tuning for SSD or M.2 type storage, or lower for sata disks
+> * `innodb_log_file_size`    Should be about 20% of *innodb_buffer_pool_size*
+> * `key_buffer_size`         defaults to 15% of available ram
 
 > **Custom settings**
 
 > This is list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
+
+> **Tmux settings**
+
+> Here you can add any specific settings for Tmux that you want.  The defaults here are fairly typical.  Unfortunately the tmux table doesn't have a description or hint field, so you'll have to look at the main Tmux Settings page on your site.
 
 ```
 mysql nzedb -e "select setting,value,hint from settings where setting like '%lookuppar2%';"
