@@ -104,7 +104,7 @@ Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a gen
 > ##### Variables `roles/mariadb/defaults/main.yml`
 > * `mysql_root_pass`  (pulls from `vault_mysql_root_pass` or has a default)
 > * `mysql_timezone`
-
+>
 > The rest of the variables can be left to the defaults.
 
 ### tools
@@ -125,7 +125,7 @@ Installs powerline and several fonts to make tmux prettier
 Installs latest version of composer
 
 > ##### Variables `roles/composer/defaults/main.yml`
-
+>
 > Should not need to change anything here.
 
 ### sphinx
