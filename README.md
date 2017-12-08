@@ -102,7 +102,6 @@ Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a gen
 *NOTE* There are additional mysql tuning parameters to set in the nZEDb role section below.
 
 > ##### Variables `roles/mariadb/defaults/main.yml`
-
 > * `mysql_root_pass`  (pulls from `vault_mysql_root_pass` or has a default)
 > * `mysql_timezone`
 
@@ -113,7 +112,6 @@ Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a gen
 Installs yydecode, niel's php-yenc-extension, par2 and latest unrar
 
 > ##### Variables `roles/tools/defaults/main.yml`
-
 > * `rar_version` 5.5.0
 > * `nzedb_yenc_version` 1.3.0
 > * `nzedb_yydecode_version` 0.2.10
@@ -139,18 +137,15 @@ Installs sphinxsearch.
 Installs nzedb, creates and populates database.
 
 > ##### Variables `roles/nzedb/defaults/main.yml`
-
 > **NNTP server configuration**
-
 > * `nntp_username`       (pulls from `vault_nntp_username`)
 > * `nntp_password`       (pulls from `vault_nntp_password`)
 > * `nntp_server`         news.supernews.com
 > * `nntp_port`           443
 > * `nntp_sslenabled`     true
 > * `nntp_socket_timeout` 120
-
+>
 > **IRC Scraper configuration**
-
 > * `irc_username`        (pulls from `vault_irc_username`)
 > * `irc_nickname`        (pulls from `vault_irc_nickname`)
 > * `irc_realname`        (pulls from `vault_irc_realname`)
@@ -158,15 +153,13 @@ Installs nzedb, creates and populates database.
 > * `irc_server`          (pulls from `vault_irc_server` or defaults to _irc.synirc.net_)
 > * `irc_port`            (pulls from `vault_irc_port` or defaults to 6697 for SSL)
 > * `irc_tls`             true
-
+>
 > **File path locations**
-
 > * `nzbpath`             /var/www/nzedb/resources/nzb/
 > * `coverspath`          /var/www/nzedb/resources/covers/
 > * `tmpunrarpath`        /var/www/nzedb/resources/tmp/unrar/
-
+>
 > **API keys**
-
 > * `apikey_amazon_associate` (pulls from `vault_apikey_amazon_associate`)
 > * `apikey_amazon_private`   (pulls from `vault_apikey_amazon_private`)
 > * `apikey_amazon_public`    (pulls from `vault_apikey_amazon_public`)
@@ -176,9 +169,8 @@ Installs nzedb, creates and populates database.
 > * `apikey_tmdb`             (pulls from `vault_apikey_tmdb`)
 > * `apikey_trakttv`          (pulls from `vault_apikey_trakttv`)
 > * `apikey_trakttv_client`   (pulls from `vault_apikey_trakttv_client`)
-
+>
 > **Mysql configs**
-
 > * `nzedb_mysql_dbname`      nzedb
 > * `nzedb_mysql_pass`        fcrnjmiervwn
 > * `innodb_buffer_percent`   for *innodb_buffer_pool_size* - defaults to 70% of available ram
@@ -189,13 +181,13 @@ Installs nzedb, creates and populates database.
 > * `innodb_lru_scan_depth`   Tuning for SSD or M.2 type storage, or lower for sata disks
 > * `innodb_log_file_size`    Should be about 20% of *innodb_buffer_pool_size*
 > * `key_buffer_size`         defaults to 15% of available ram
-
+>
 > **Custom settings**
-
+>
 > This is list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
-
+>
 > **Tmux settings**
-
+>
 > Here you can add any specific settings for Tmux that you want.  The defaults here are fairly typical.  Unfortunately the tmux table doesn't have a description or hint field, so you'll have to look at the main Tmux Settings page on your site.
 
 ```
@@ -203,7 +195,7 @@ mysql nzedb -e "select setting,value,hint from settings where setting like '%loo
 ```
 
 > **Groups to activate**
-
+>
 > This is the list of groups to activate.  You can also set whether to backfill the group, and for how many days back to go.
 
 ## Other information
