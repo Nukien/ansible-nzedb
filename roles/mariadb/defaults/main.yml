@@ -12,7 +12,7 @@ mysql_root_pass: "{{ vault_mysql_root_pass | default('rCWeI5bMvnuhQuEX') }}"
 mysql_basedir: "/usr"
 mysql_bind_address: "0.0.0.0"
 
-mysql_timezone: "America/New_York"
+mysql_timezone: "{{ timezone | default('America/New_York') }}"
 
 mysql_character_set_server: "utf8"
 # mysql_character_set_server: "utf8mb4"
