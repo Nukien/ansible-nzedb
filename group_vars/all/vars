@@ -8,6 +8,9 @@ force_update: false
 # To enable iptables (not currently used)
 enable_iptables: false
 
+# Timezone
+timezone: America/New_York
+
 ### Main user for nZED system #######################################
 #                                                                   #
 # This is the main user on the system                               #
