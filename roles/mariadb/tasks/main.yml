@@ -158,8 +158,8 @@
 # use_mysql_root may be "-p<some password>" or it may be ""
 # so -p is already included in the variable, no need to specify it
 - name: disable mysql anonymous access
-  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = ''"
-  #shell: sudo -i mysql "{{ use_mysql_root | default(omit) }}" -NBe "DELETE FROM mysql.user WHERE User = ''"
+  #shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = ''"
+  shell: mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = ''"
   when:
     - start_service_result.results[0].state == "started"
   register: disable_anonymous_access_result
@@ -167,7 +167,8 @@
   ignore_errors: yes
 
 - name: disable mysql root access from remote
-  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = 'root' AND Host <> 'localhost'"
+  #shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = 'root' AND Host <> 'localhost'"
+  shell: mysql "{{ use_mysql_root }}" -NBe "DELETE FROM mysql.user WHERE User = 'root' AND Host <> 'localhost'"
   when:
     - start_service_result.results[0].state == "started"
   register: disable_root_access_remote_result
@@ -175,7 +176,8 @@
   ignore_errors: yes
 
 - name: setup mysql debian-sys-maint password
-  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'debian-sys-maint'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
+  #shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'debian-sys-maint'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
+  shell: mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'debian-sys-maint'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
   when:
     - start_service_result.results[0].state == "started"
     - mysql_root_pass is string
@@ -199,7 +201,8 @@
   ignore_errors: yes
 
 - name: setup mysql root password
-  shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
+  #shell: sudo -i mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
+  shell: mysql "{{ use_mysql_root }}" -NBe "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('{{ mysql_root_pass }}')"
   when:
 #    - start_service_result.results[0].state == "started"
     - mysql_root_pass is string
