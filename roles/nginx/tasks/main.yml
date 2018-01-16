@@ -1,34 +1,73 @@
 ---
 
+- name: Add iptables rules for nginx
+  blockinfile:
+    dest: /etc/iptables/rules.v4
+    insertafter: '#----- END Base iptables header config ----'
+    marker: "#----- {mark} nginx -----"
+    block: |
+      #
+      # Allowing all inbound traffic to https/443 and http/80
+      -A TCP -p tcp --dport https -j ACCEPT
+      -A TCP -p tcp --dport http -j ACCEPT
+      #
+  notify: Restore iptables rules
+  when: enable_iptables
+
 - name: Remove existing config files if force_update == true
   file:
     path: "{{ item }}"
     state: absent
   when: force_update
   with_items:
-    - /etc/nginx/conf.d/default.conf
+    - /etc/nginx/sites-enabled/emailer.conf
+    - /etc/nginx/auth.conf
+    - /etc/nginx/.htpasswd
+    - /etc/fail2ban/jail.d/nginx-botsearch.local
+    - /etc/fail2ban/jail.d/nginx-http-auth.local
+
+- name: Add Nginx fail2ban config
+  set_fact:
+    fail2ban_services: "{{ fail2ban_services | default([]) + [ item ] }}"
+  with_items: "{{ nginx_fail2ban }}"
+  changed_when: true
+  notify: Create fail2ban local configs
 
 - name: Install nginx and php7.0
   apt:
     name: "{{ item }}"
     state: present
     update_cache: yes
-  with_items:
-    - nginx
-    - php-imagick
-    - php-pear
-    - php7.0-cli
-    - php7.0-common
-    - php7.0-curl
-    - php7.0-dev
-    - php7.0-fpm
-    - php7.0-gd
-    - php7.0-json
-    - php7.0-mbstring
-    - php7.0-mcrypt
-    - php7.0-mysql
-    - php7.0-xml
+  with_items: "{{ nginx_packages }}"
   check_mode: no
+
+- name: Create php log dir
+  file:
+    path: /var/log/php
+    owner: www-data
+    group: adm
+    state: directory
+
+# Note: {{ item }} is used in php_settings.ini.j2
+- name: Copy basic php settings into place
+  template:
+    src: php_settings.ini.j2
+    dest: "/etc/php/7.0/{{ item }}/conf.d/0_php_settings.ini"
+  with_items:
+    - cli
+    - fpm
+  notify: Restart php-fpm
+
+- name: Copy logrotate config for nginx/php
+  copy:
+    src: php7.0-email
+    dest: /etc/logrotate.d/php7.0-email
+
+- name: Create test.php
+  copy:
+    content: |
+      <?php phpinfo(); ?>
+    dest: /var/www/test.php
 
 - name: Remove default site
   file:
@@ -36,12 +75,30 @@
     state: absent
   notify: Restart Nginx
 
-# - name: Copy support files via template
-#   template:
-#     src:  "{{ item.src }}"
-#     dest: "{{ item.dest }}"
-#     mode: "{{ item.mode }}"
-#   with_items:
-#     - { src: default.conf.j2,  dest: '/etc/nginx/conf.d/default.conf', mode: 'u=rwx,g=rx,o=rx' }
-#   notify: Restart Nginx
+- name: Create .htpasswd for main user
+  command: "mkpasswd {{ userpass }}"
+  register: nginx_htpasswd
+  changed_when: false
+  failed_when: nginx_htpasswd.rc != 0
+  no_log: true
+  
+- name: Copy support files via template
+  template:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: www-data
+  with_items:
+    - { src: emailer.conf.j2,  dest: '/etc/nginx/sites-enabled/emailer.conf', mode: 'u=rwx,g=rx,o=rx' }
+    - { src: port80.conf.j2,  dest: '/etc/nginx/sites-enabled/port80.conf', mode: 'u=rwx,g=rx,o=rx' }
+    - { src: auth.conf.j2,  dest: '/etc/nginx/auth.conf', mode: 'u=rwx,g=rx,o=rx' }
+    - { src: htpasswd.j2,  dest: '/etc/nginx/.htpasswd', mode: 'u=rwx,g=-rwx,o=-rwx' }
+  notify: Restart Nginx
 
+- name: Copy snippets for nginx config
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/nginx/snippets/emailer_{{ item }}"
+  with_items:
+    - nginx_status.conf
+  notify: Restart Nginx
