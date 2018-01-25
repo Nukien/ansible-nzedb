@@ -172,7 +172,7 @@ Installs nzedb, creates and populates database.
 >
 > **Mysql configs**
 > * `nzedb_mysql_dbname`      nzedb
-> * `nzedb_mysql_pass`        fcrnjmiervwn
+> * `nzedb_mysql_pass`        fcrnjmiervwn  << do change this ...
 > * `innodb_buffer_percent`   for *innodb_buffer_pool_size* - defaults to 70% of available ram
 > * `innodb_buffer_pool_instances` defaults to about 1-2g of buffer_pool_size per instance
 > * `innodb_additional_mem_pool_size` 20M
@@ -182,13 +182,13 @@ Installs nzedb, creates and populates database.
 > * `innodb_log_file_size`    Should be about 20% of *innodb_buffer_pool_size*
 > * `key_buffer_size`         defaults to 15% of available ram
 >
-> **Custom settings**
->
-> This is list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
->
 > **Tmux settings**
 >
 > Here you can add any specific settings for Tmux that you want.  The defaults here are fairly typical.  Unfortunately the tmux table doesn't have a description or hint field, so you'll have to look at the main Tmux Settings page on your site.
+>
+> **Custom settings**
+>
+> This is list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
 
 ```
 mysql nzedb -e "select setting,value,hint from settings where setting like '%lookuppar2%';"
