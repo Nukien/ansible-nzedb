@@ -1,5 +1,12 @@
 ---
 
+# Version to check
+# ----------------
+# vim/defaults/main.yml           fzf_version
+# tools/defaults/main.yml         rar_version
+# tools/defaults/main.yml         nzedb_yydecode_version
+# composer/defaults/main.yml      composer_version
+
 # Specific variables to set
 # -------------------------
 # username                  group_vars/vars

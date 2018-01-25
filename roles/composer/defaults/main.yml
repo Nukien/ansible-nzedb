@@ -2,6 +2,7 @@
 
 composer_path: /usr/local/bin/composer
 composer_keep_updated: true
+# Leave blank '' for latest version, or define specific version here
 composer_version: ''
 
 # The directory where global packages will be installed.
