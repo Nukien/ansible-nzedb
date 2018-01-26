@@ -28,5 +28,6 @@ _apt: [
   { state: "latest", name: "mariadb-server-core-10.1" },
   { state: "latest", name: "percona-xtrabackup" },
   { state: "latest", name: "python-mysqldb" },
+  { state: "latest", name: "bc" },
 ]
 # { state: "latest", name: "automysqlbackup" },

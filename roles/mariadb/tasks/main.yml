@@ -82,7 +82,7 @@
 
 - name: Fetch tuningprimer.sh
   get_url:
-    url: https://launchpad.net/mysql-tuning-primer/trunk/1.6-r1/+download/tuning-primer.sh 
+    url: https://raw.githubusercontent.com/RootService/tuning-primer/master/tuning-primer.sh
     dest: /usr/local/bin/tuning-primer.sh
     mode: u=rwx,g=rx,o=rx
 
