@@ -12,7 +12,9 @@ server {
   ssl_ciphers         "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:AES256-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4";
   ssl_certificate     {{ ssl_certs_cert_path }};
   ssl_certificate_key {{ ssl_certs_privkey_path }};
+{% if ssl_certs_generate_dh_param %}
   ssl_dhparam         {{ ssl_certs_dhparam_path }};
+{% endif %}
   ssl_prefer_server_ciphers on;
   ssl_stapling        on;
   ssl_stapling_verify on;
