@@ -7,7 +7,7 @@ do_restart: false
 enable_tinc: false
 enable_zerotier: false
 
-mysql_root_pass: "{{ vault_mysql_root_pass | default('rCWeI5bMvnuhQuEX') }}"
+mysql_root_pass: "{{ vault_mysql_root_pass | default('CheapDirtyPassword') }}"
 
 mysql_basedir: "/usr"
 mysql_bind_address: "0.0.0.0"
