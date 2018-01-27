@@ -18,6 +18,79 @@
   gather_facts: true
   become: yes
 
+  pre_tasks:
+    - pause:
+        prompt: |
+          ##########################################################
+          # Some variables are using default values
+          # Please ensure you really want to use them like this
+          ##########################################################
+          #
+          {% if username == "george" %}
+          username = {{ username }}
+          {% endif %}
+          {% if password == "password" %}
+          password = {{ password }}
+          {% endif %}
+          {% if mysql_root_pass == "CheapDirtyPassword" %}
+          mysql_root_pass = {{ mysql_root_pass }}
+          {% endif %}
+          {% if firstname == "George" %}
+          firstname = {{ firstname }}
+          {% endif %}
+          {% if lastname == "of the Jungle" %}
+          lastname = {{ lastname }}
+          {% endif %}
+          {% if nntp_username == "george" %}
+          nntp_username = {{ nntp_username }}
+          {% endif %}
+          {% if nntp_password == "george" %}
+          nntp_password = {{ nntp_password }}
+          {% endif %}
+          {% if nntp_server == "news.supernews.com" %}
+          nntp_server = {{ nntp_server }}
+          {% endif %}
+          {% if irc_username == "george" %}
+          irc_username = {{ irc_username }}
+          {% endif %}
+          {% if irc_nickname == "george" %}
+          irc_nickname = {{ irc_nickname }}
+          {% endif %}
+          {% if irc_realname == "george" %}
+          irc_realname = {{ irc_realname }}
+          {% endif %}
+          {% if irc_password == "george" %}
+          irc_password = {{ irc_password }}
+          {% endif %}
+          {% if irc_server == "irc.synirc.net" %}
+          irc_server = {{ irc_server }}
+          {% endif %}
+          {% if irc_port == "6697" %}
+          irc_port = {{ irc_port }}
+          {% endif %}
+          {% if nzedb_mysql_pass == "fcrnjmiervwn" %}
+          nzedb_mysql_pass = {{ nzedb_mysql_pass }}
+          {% endif %}
+          #
+          ###### Press ctrl-c to abort or <enter> to continue ######
+      when:
+        - username == "george" or
+          password == "password" or
+          mysql_root_pass == "CheapDirtyPassword" or
+          firstname == "George" or
+          lastname == "of the Jungle" or
+          nntp_username == "george" or
+          nntp_password == "george" or
+          nntp_server == "news.supernews.com" or
+          irc_username == "george" or
+          irc_nickname == "george" or
+          irc_realname == "george" or
+          irc_password == "george" or
+          irc_server == "irc.synirc.net" or
+          irc_port == "6697" or
+          nzedb_mysql_pass == "fcrnjmiervwn"
+      tags: always
+
   roles:
     - { role: tools,     tags: 'tools' }
     - { role: powerline, tags: 'powerline' }
