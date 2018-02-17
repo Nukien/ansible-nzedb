@@ -29,8 +29,8 @@
           {% if username == "george" %}
           username = {{ username }}
           {% endif %}
-          {% if password == "password" %}
-          password = {{ password }}
+          {% if userpass == "password" %}
+          userpass = {{ userpass }}
           {% endif %}
           {% if mysql_root_pass == "CheapDirtyPassword" %}
           mysql_root_pass = {{ mysql_root_pass }}
@@ -75,7 +75,7 @@
           ###### Press ctrl-c to abort or <enter> to continue ######
       when:
         - username == "george" or
-          password == "password" or
+          userpass == "password" or
           mysql_root_pass == "CheapDirtyPassword" or
           firstname == "George" or
           lastname == "of the Jungle" or

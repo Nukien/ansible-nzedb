@@ -15,7 +15,7 @@ timezone: America/New_York
 #                                                                   #
 # This is the main user on the system                               #
 username:  "{{ vault_default_username | default('george') }}"
-password:  "{{ vault_default_password | default('password') | regex_escape() }}"
+userpass:  "{{ vault_default_password | default('password') | regex_escape() }}"
 firstname: "{{ vault_firstname | default('George') }}"
 lastname:  "{{ vault_lastname  | default('of the Jungle') }}"
 
