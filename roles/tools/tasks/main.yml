@@ -9,19 +9,37 @@
   with_items:
     - .profile.d
 
-- name: Install apt_repository and apt-check requirements
-  apt:
-    name: "{{ item }}"
-    state: present
-    update_cache: yes
-  with_items:
-    - automake
-    - build-essential
-    - git
-    - python-apt
-    - python-pip
-    - software-properties-common
-    - update-notifier-common
+- block:
+  # These tasks should run always, even with ansible-playbook --check
+
+  # Need to check if /usr/lib/apt/apt.systemd.daily is running 1st and wait for it
+  # to finish before this
+  - name: Check for apt.systemd.daily
+    shell: ps axf | grep apt.systemd.daily | grep -v grep | cut -c1-5 | tr -d ' '
+    ignore_errors: yes
+    register: apt_systemd_daily
+    changed_when: false
+  
+  - name: Wait for apt.systemd.daily ({{ apt_systemd_daily.stdout }}) to exit
+    wait_for:
+      path: "/proc/{{ apt_systemd_daily.stdout }}/cmdline"
+      state: absent
+      timeout: 180
+    when: apt_systemd_daily.stdout != ""
+  - name: Install apt_repository and apt-check requirements
+    apt:
+      name: "{{ item }}"
+      state: present
+      update_cache: yes
+    with_items:
+      - automake
+      - build-essential
+      - git
+      - python-apt
+      - python-pip
+      - software-properties-common
+      - update-notifier-common
+  #
   check_mode: no
 
 - name: Fetch yydecode
