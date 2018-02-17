@@ -15,7 +15,7 @@
   # Need to check if /usr/lib/apt/apt.systemd.daily is running 1st and wait for it
   # to finish before this
   - name: Check for apt.systemd.daily
-    shell: ps axf | grep apt.systemd.daily | grep -v grep | cut -c1-5 | tr -d ' '
+    shell: ps axf | grep apt.systemd.daily | grep -v grep | cut -c1-5 | tr -d ' ' | head -1
     ignore_errors: yes
     register: apt_systemd_daily
     changed_when: false
