@@ -27,21 +27,15 @@
       timeout: 180
     when: apt_systemd_daily.stdout != ""
 
-  # Always run this even with ansible-playbook --check
-  - name: Check if there are packages to be upgraded
-    command: /usr/lib/update-notifier/apt-check --package-names
-    register: apt_packages
-    changed_when: false
-
   - name: Upgrade existing packages
-    apt: upgrade=dist
-    when: apt_packages.stderr != ""
+    apt: 
+      update_cache: yes
+      upgrade: dist
   
   - name: Install apt_repository and apt-check requirements
     apt:
       name: "{{ item }}"
       state: present
-      update_cache: yes
     with_items:
       - automake
       - build-essential
