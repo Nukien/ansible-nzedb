@@ -1,0 +1,28 @@
+---
+nginx_packages:
+  - nginx
+  - php-imagick
+  - php-pear
+  - php7.0-cli
+  - php7.0-common
+  - php7.0-curl
+  - php7.0-dev
+  - php7.0-fpm
+  - php7.0-gd
+  - php7.0-json
+  - php7.0-mbstring
+  - php7.0-mcrypt
+  - php7.0-mysql
+  - php7.0-xml
+
+# Nginx service definition
+nginx_fail2ban:
+  - name: nginx-http-auth
+    text: |
+      # Enabling nginx-http-auth from stock jail.conf
+      enabled = true
+  - name: nginx-botsearch
+    text: |
+      # Enabling nginx-botsearch from stock jail.conf
+      enabled = true
+

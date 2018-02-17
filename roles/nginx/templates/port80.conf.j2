@@ -1,0 +1,23 @@
+{% if ssl_certs_cert_path is defined %}
+# Only want this if SSL is enabled, because the emailer.conf.j2 source
+# file will use "listen 80;" if there's no SSL
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server ipv6only=on;
+
+    server_name {{ inventory_hostname }};
+    root /var/www;
+    index index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ =404;
+        rewrite ^ https://$server_name$request_uri? permanent;
+    }
+
+    # For letsencrypt
+    location /.well-known {
+        auth_basic off;
+        allow all;
+    }
+}
+{% endif %}
