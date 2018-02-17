@@ -26,6 +26,7 @@
       state: absent
       timeout: 180
     when: apt_systemd_daily.stdout != ""
+
   - name: Install apt_repository and apt-check requirements
     apt:
       name: "{{ item }}"
