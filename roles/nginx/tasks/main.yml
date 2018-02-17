@@ -7,8 +7,11 @@
     marker: "#----- {mark} nginx -----"
     block: |
       #
-      # Allowing all inbound traffic to https/443 and http/80
+      {% if ssl_certs_cert_path is defined %}
+      # Allowing all inbound traffic to https/443
       -A TCP -p tcp --dport https -j ACCEPT
+      {% endif %}
+      # Allowing all inbound traffic to http/80
       -A TCP -p tcp --dport http -j ACCEPT
       #
   notify: Restore iptables rules
@@ -31,7 +34,7 @@
     fail2ban_services: "{{ fail2ban_services | default([]) + [ item ] }}"
   with_items: "{{ nginx_fail2ban }}"
   changed_when: true
-  notify: Create fail2ban local configs
+  #notify: Create fail2ban local configs
 
 - name: Install nginx and php7.0
   apt:
@@ -90,9 +93,19 @@
     owner: www-data
   with_items:
     - { src: emailer.conf.j2,  dest: '/etc/nginx/sites-enabled/emailer.conf', mode: 'u=rwx,g=rx,o=rx' }
-    - { src: port80.conf.j2,  dest: '/etc/nginx/sites-enabled/port80.conf', mode: 'u=rwx,g=rx,o=rx' }
     - { src: auth.conf.j2,  dest: '/etc/nginx/auth.conf', mode: 'u=rwx,g=rx,o=rx' }
     - { src: htpasswd.j2,  dest: '/etc/nginx/.htpasswd', mode: 'u=rwx,g=-rwx,o=-rwx' }
+  notify: Restart Nginx
+
+- name: Copy port 80 config file (no ssl certs defined)
+  template:
+    src:  "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    owner: www-data
+  with_items:
+    - { src: port80.conf.j2,  dest: '/etc/nginx/sites-enabled/port80.conf', mode: 'u=rwx,g=rx,o=rx' }
+  when: ssl_certs_cert_path is defined
   notify: Restart Nginx
 
 - name: Copy snippets for nginx config
