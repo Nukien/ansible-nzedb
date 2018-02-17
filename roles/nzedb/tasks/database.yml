@@ -100,7 +100,7 @@
 
 # htpasswd -nbB myName myPassword | awk -F ":" '{print $2}'
 - name: Create CRYPTEDPW version of user password
-  shell: htpasswd -nbB test {{ password }} | awk -F ":" '{print $2}'
+  shell: htpasswd -nbB test {{ userpass }} | awk -F ":" '{print $2}'
   register: nzedb_crypted_pass
   no_log: true
   failed_when: nzedb_crypted_pass.rc != 0
