@@ -1,4 +1,8 @@
 server {
+
+# This config can be used to have nzedb be the only thing on this server
+# ie. Answering on http://nzedb.example.com rather than http://www.example.com/nzedb
+
     listen 80;
     server_name {{ inventory_hostname }};
 

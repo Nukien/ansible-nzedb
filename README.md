@@ -84,7 +84,7 @@ See `group_vars/all/vars`
 **This is the main user on the system**
 
 * `username`            (pulls from `vault_default_username` or defaults to _george_)
-* `password`            (pulls from `vault_default_password` or defaults to _password_)
+* `userpass`            (pulls from `vault_default_password` or defaults to _password_)
 * `firstname`           (pulls from `vault_firstname` or defaults to _George_)
 * `lastname`            (pulls from `vault_lastname`  or defaults to _of the Jungle_)
 * `default_mail_target` (pulls from `vault_default_mail_target` or defaults to _username@inventory\_hostname_)
@@ -94,6 +94,11 @@ See `group_vars/all/vars`
 ### nginx
 
 Simple setup of nginx and php7.0
+
+Defaults to installing nzedb under _/nzedb_ rather than hung directly off the root.
+EG. `http://my.server.com/nzedb` rather than `http://nzedb.server.com/`
+
+Edit the `roles/nzedb/tasks/main.yml` file to change this.
 
 ### mariadb
 

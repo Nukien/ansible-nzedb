@@ -8,6 +8,7 @@
   with_items:
     - /etc/mysql/conf.d/nzedb.cnf
     - /etc/nginx/conf.d/nzedb.conf
+    - /etc/nginx/snippets/emailer_nzedb.conf
     - /var/www/nzedb/www/config.php
     - /etc/sysctl.d/60-swap.conf
 
@@ -80,13 +81,18 @@
   changed_when: false
   when: nzedb_swappiness | changed
 
+# Copy nzedb_as_root.conf.j2 to /etc/nginx/conf.d/nzedb.conf if you want to have nzedb
+# on the root of this nginx server.
+# Copy emailer_nzedb.conf.j2 to /etc/nginx/snippets/emailer_nzedb.conf to have nzedb
+# available as /nzedb.  EG: http://my.server.com/nzedb
 - name: Copy nginx configuration files
   template:
     src:  "{{ item.src }}"
     dest: "{{ item.dest }}"
     mode: "{{ item.mode }}"
   with_items:
-    - { src: nzedb.conf.j2,  dest: '/etc/nginx/conf.d/nzedb.conf', mode: 'u=rwx,g=rx,o=rx' }
+    #- { src: nzedb_as_root.conf.j2,  dest: '/etc/nginx/conf.d/nzedb.conf', mode: 'u=rwx,g=rx,o=rx' }
+    - { src: emailer_nzedb.conf.j2,  dest: '/etc/nginx/snippets/emailer_nzedb.conf', mode: 'u=rwx,g=rx,o=rx' }
   notify: Restart Nginx
 
 # Only need to reload php7.0-fpm if nzedb_php_settings.ini is changed/copied
