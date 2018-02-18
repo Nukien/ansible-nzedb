@@ -1,6 +1,15 @@
 ---
 
+#
+# Actually need to clear memory caches to ensure mariadb/mysql will start
+# Unfortunately no access to do this under OpenVZ
+#
 - name: restart mysql
+  command: sysctl -w vm.drop_caches=3
+  when: ansible_virtualization_type != "openvz"
+  notify: Now restart mysql
+
+- name: Now restart mysql
   service:
     name: "{{ item.name }}"
     state: "{{ item.state }}"
