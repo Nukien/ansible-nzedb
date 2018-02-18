@@ -69,7 +69,8 @@ innodb_lru_scan_depth: 15000
 
 # innodb_log_file_size should be approx 20-25% of innodb_buffer_pool_size
 # Since there are 2 logfiles be default, divide by 2
-innodb_log_file_size: "{{ (ansible_memtotal_mb * innodb_buffer_percent / 100 * 0.20 / 2) | int | abs }}M"
+innodb_log_file_percent: 20
+innodb_log_file_size: "{{ (ansible_memtotal_mb * innodb_buffer_percent / 100 * innodb_log_file_percent / 100 / 2) | int | abs }}M"
 
 # myisam tuning
 key_buffer_size: "{{ (ansible_memtotal_mb * 0.15) | int | abs }}M"
