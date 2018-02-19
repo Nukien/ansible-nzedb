@@ -143,7 +143,10 @@ wsrep_cluster_name = {{ domain | default('mariadb') }}_cluster
 wsrep_on = 1
 wsrep_provider = /usr/lib/galera/libgalera_smm.so
 wsrep_sst_auth = "root:{{ mysql_root_pass }}"
-wsrep_sst_method = xtrabackup-v2
+
+# Looks like specifying the method causes joining nodes to fail
+# https://www.percona.com/forums/questions-discussions/percona-xtradb-cluster/27626-2nd-node-unable-to-join-cluster
+# wsrep_sst_method = xtrabackup-v2
 {% endif %}
 
 [mysqldump]
