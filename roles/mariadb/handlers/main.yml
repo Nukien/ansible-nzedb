@@ -7,6 +7,7 @@
 - name: restart mysql
   command: sysctl -w vm.drop_caches=3
   when: ansible_virtualization_type != "openvz"
+  changed_when: false
   notify: Now restart mysql
 
 - name: Now restart mysql
