@@ -8,6 +8,9 @@ force_update: false
 # To enable iptables (not currently used)
 enable_iptables: false
 
+# To install self-signed cert
+enable_selfsigned_cert: true
+
 # Timezone
 timezone: America/New_York
 

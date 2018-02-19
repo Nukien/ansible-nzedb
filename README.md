@@ -89,7 +89,20 @@ See `group_vars/all/vars`
 * `lastname`            (pulls from `vault_lastname`  or defaults to _of the Jungle_)
 * `default_mail_target` (pulls from `vault_default_mail_target` or defaults to _username@inventory\_hostname_)
 
+* `enable_selfsigned_cert` Set to `true` to install a self-signed cert for nginx
+
 ## Roles included
+
+### certs
+
+Installs a self-signed cert setup in `/etc/ssl/<hostname>`
+
+Nginx will use this cert, and will also create a `port80.conf` file listening on port http/80 which redirects to the https/443 main config (emailer.conf).
+
+> ##### Variables `roles/certs/defaults/main.yml`
+> * `ssl_certs_key_size` 4096
+> * `ssl_certs_generate_dh_param` false - set to `true` to generate a strong DHE parameter file.  _NOTE:_ this can take quite a while ...
+> * `ssl_certs_...` Set cert contents (country, state etc.) to appropriate values
 
 ### nginx
 
@@ -98,7 +111,9 @@ Simple setup of nginx and php7.0
 Defaults to installing nzedb under _/nzedb_ rather than hung directly off the root.
 EG. `http://my.server.com/nzedb` rather than `http://nzedb.server.com/`
 
-Edit the `roles/nzedb/tasks/main.yml` file to change this.
+Edit the `roles/nzedb/tasks/main.yml` file to change this - the *Copy nginx configuration files* task.
+
+The main config file is `emailer.conf` in `/etc/nginx/sites-enabled`.  It includes snippets from the `/etc/nginx/snippets/` directory of the form `emailer_<something>.conf`.  One example is `emailer_nginx_status.conf` which provides the standard nginx status page at *http://<hostname>/nginx_status*
 
 ### mariadb
 

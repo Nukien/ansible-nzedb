@@ -94,6 +94,7 @@
   roles:
     - { role: tools,     tags: 'tools' }
     - { role: powerline, tags: 'powerline' }
+    - { role: certs,     tags: 'certs', when: enable_selfsigned_cert == true }
     - { role: nginx,     tags: 'nginx' }
     - { role: mariadb,   tags: 'mariadb' }
     - { role: composer,  tags: 'composer' }
