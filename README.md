@@ -1,8 +1,10 @@
 # nZEDb ansible playbook
 
-This contains a minimal set of ansible roles to install a working nZEDb system.  Note: nZEDb is a complex beast, with a metric ton of configuration required.  The variables defined below will get the system up and running, but it will likely need additional tweaking.  Please see the [main nZEDb repo](https://github.com/nZEDb/nZEDb "nZEDb github repo") for more information.
+This contains a minimal set of ansible roles to install a working nZEDb setup onto an existing Ubuntu 16.04 system.  Note: nZEDb is a complex beast, with a metric ton of configuration required.  The variables defined below will get the system up and running, but it will likely need additional tweaking.  Please see the [main nZEDb repo](https://github.com/nZEDb/nZEDb "nZEDb github repo") for more information.
 
 ## Prerequisites
+
+You must be able to ssh into your target system using ssh keys.
 
 The following python packages must be installed on the target Ubuntu 16.04 system for ansible to be able to connect and work
 
@@ -14,9 +16,17 @@ Since a lot of the information required would be considered confidential (userid
 ansible-vault create group_vars/all/vault
 ```
 
-Each of the roles below will list the variables that can be set, and the default vault-version that they pull from.  In general, vault variables are named like `vault_nntp_password` which would map to a main `nntp_password` variable for use in the tasks.
+Each of the roles below will list the variables that can be set, and the default vault-version that they pull from (if it's a secret).  In general, vault variables are named like `vault_nntp_password` which would map to a main `nntp_password` variable for use in the tasks.
 
-There are several directories that you should pre-create, to make data management and backups a bit easier.
+For example, the `nntp_password` variable for the nZEDb role is listed in the `roles/nZEDb/defaults/main.yml` file as
+
+```
+nntp_password: "{{ vault_nntp_password | default('george') }}"
+```
+
+which means that the `nntp_password` variable will be set to the whatever the vault variable `vault_nntp_password` is, and if that doesn't exist then use a default of *george*.
+
+There are several directories that you should pre-create as separate filesystems, to make data management and backups a bit easier.  If you're already using ZFS, consider it - it's perfect for managing stuff like this, besides being an awesome filesystem.
 
 * `/var/www/nzedb`                      The main directory for nZEDb
 * `/var/www/nzedb/resources/nzb`        Can get *very* large with millions of files
@@ -51,7 +61,7 @@ EOF
 systemctl enable var-www-nzedb-resources-tmp-unrar.mount
 ```
 
-The ugly systemd unit is needed for the tmpfs to ensure that it doesn't mount until *after* the zfs datasets mount.  If you put an entry in `/etc/fstab` that will mount *before* the main nzedb dataset, which will prevent that dataset from mounting.  Bad things happen.
+The ugly systemd unit is needed for the tmpfs to ensure that it doesn't mount until *after* the zfs datasets mount.  If you put an entry in `/etc/fstab`, then the `/var/www/nzedb/resources/tmp/unrar` directory will mount *before* the main nzedb dataset.  That in turn will prevent parent `/var/www/nzedb` dataset from mounting.  Bad things happen.
 
 If using ZFS, the above configuration has been verified to work.  The datasets mount in the correct order, and the tmpfs mounts after them.  Of course, this is just an example, you can use whatever systems and conventions you prefer for disk layout.
 
