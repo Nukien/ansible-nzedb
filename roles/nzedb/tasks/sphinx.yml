@@ -68,5 +68,5 @@
     failed_when: nzedb_sphinx_populate_tables.rc != 0
     changed_when: false
   #
-  when: force_update or nzedb_sphinx_config | changed or nzedb_sphinx_update | changed
+  when: force_update or nzedb_sphinx_config is changed or nzedb_sphinx_update is changed
 
