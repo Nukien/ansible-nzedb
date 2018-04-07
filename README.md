@@ -26,7 +26,7 @@ nntp_password: "{{ vault_nntp_password | default('george') }}"
 
 which means that the `nntp_password` variable will be set to the whatever the vault variable `vault_nntp_password` is, and if that doesn't exist then use a default of *george*.
 
-There are several directories that you should pre-create as separate filesystems, to make data management and backups a bit easier.  If you're already using ZFS, consider it - it's perfect for managing stuff like this, besides being an awesome filesystem.
+There are several directories that you should pre-create as separate filesystems, to make data management and backups a bit easier.  If you're not already using ZFS, consider it - it's perfect for managing stuff like this, besides being an awesome filesystem.
 
 * `/var/www/nzedb`                      The main directory for nZEDb
 * `/var/www/nzedb/resources/nzb`        Can get *very* large with millions of files
