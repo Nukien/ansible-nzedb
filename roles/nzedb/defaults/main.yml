@@ -27,7 +27,7 @@ nntp_socket_timeout: 120
 ########## IRC Scraper configuration
 irc_username: "{{ vault_irc_username | default('george') }}"
 irc_nickname: "{{ vault_irc_nickname | default('george') }}"
-irc_realname: "{{ vault_irc_realname | default('george') }}"
+irc_realname: "{{ vault_irc_realname | default('George of the Jungle') }}"
 irc_password: "{{ vault_irc_password | default('george') }}"
 irc_server: "{{ vault_irc_server | default('irc.synirc.net') }}"
 irc_port: "{{ vault_irc_port | default('6697') }}"
@@ -76,6 +76,34 @@ innodb_log_file_size: "{{ (ansible_memtotal_mb * innodb_buffer_percent / 100 * i
 key_buffer_size: "{{ (ansible_memtotal_mb * 0.15) | int }}M"
 
 
+########## Any changes to default tmux settings can go here.  See the Tmux settings
+########## page on your nZEDb site for descriptions of each setting.
+tmux_settings:
+  - setting: backfill
+    value: 1
+  - setting: backfill_order
+    value: 2
+  - setting: binaries
+    value: 1
+  - setting: dehash
+    value: 3
+  - setting: fix_crap_opt
+    value: All (except wmv_all)
+  - setting: fix_names
+    value: 1
+  - setting: post
+    value: 3
+  - setting: post_amazon
+    value: 1
+  - setting: post_non
+    value: 1
+  - setting: running
+    value: 1
+  - setting: releases
+    value: 1
+  - setting: run_ircscraper
+    value: 1
+
 ########## Custom settings table entries.  You'll need to know the setting name and
 ########## the possible values.  See the settings table for more information.
 custom_settings:
@@ -121,32 +149,6 @@ custom_settings:
     value: 500
   - setting: newgroupmsgstoscan
     value: 400000
-
-tmux_settings:
-  - setting: backfill
-    value: 1
-  - setting: backfill_order
-    value: 2
-  - setting: binaries
-    value: 1
-  - setting: dehash
-    value: 3
-  - setting: fix_crap_opt
-    value: All (except wmv_all)
-  - setting: fix_names
-    value: 1
-  - setting: post
-    value: 3
-  - setting: post_amazon
-    value: 1
-  - setting: post_non
-    value: 1
-  - setting: running
-    value: 1
-  - setting: releases
-    value: 1
-  - setting: run_ircscraper
-    value: 1
 
 ########## Choose which groups to activate. Also set backfill enabled or not, and how
 ########## many days back to backfill
