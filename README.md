@@ -10,6 +10,8 @@ The following python packages must be installed on the target Ubuntu 16.04 syste
 
 `apt-get install python-minimal python2.7 python`
 
+### Setting up ansible vault (recommended)
+
 Since a lot of the information required would be considered confidential (userids, passwords, apikeys etc.) it is recommended that you set up an Ansible Vault file to hold those items.  It should be created in `group_vars/all/vault`, using a command like
 
 ```
@@ -26,6 +28,8 @@ nntp_password: "{{ vault_nntp_password | default('george') }}"
 
 which means that the `nntp_password` variable will be set to the whatever the vault variable `vault_nntp_password` is, and if that doesn't exist then use a default of *george*.
 
+### Pre-creating directories
+
 There are several directories that you should pre-create as separate filesystems, to make data management and backups a bit easier.  If you're not already using ZFS, consider it - it's perfect for managing stuff like this, besides being an awesome filesystem.
 
 * `/var/www/nzedb`                      The main directory for nZEDb
@@ -34,12 +38,13 @@ There are several directories that you should pre-create as separate filesystems
 * `/var/www/nzedb/resources/tmp/unrar`  Should be a tmpfs filesystem - used as tmp space for unrar
 * `/var/lib/mysql`                      Depends on how big your database gets
 
-For example, creating ZFS datasets might be something like
+For example, creating ZFS datasets might be something like (as root)
 
 ```
 zfs create -o mountpoint=/var/www/nzedb poolname/nzedb
 zfs create -o mountpoint=/var/www/nzedb/resources/nzb poolname/nzbs
 zfs create -o mountpoint=/var/www/nzedb/resources/covers poolname/covers
+chown -R my_userid.my_userid /var/www/nzedb
 
 cat > /etc/systemd/system/var-www-nzedb-resources-tmp-unrar.mount << EOF
 [Unit]
@@ -123,7 +128,7 @@ EG. `http://my.server.com/nzedb` rather than `http://nzedb.server.com/`
 
 Edit the `roles/nzedb/tasks/main.yml` file to change this - the *Copy nginx configuration files* task.
 
-The main config file is `emailer.conf` in `/etc/nginx/sites-enabled`.  It includes snippets from the `/etc/nginx/snippets/` directory of the form `emailer_<something>.conf`.  One example is `emailer_nginx_status.conf` which provides the standard nginx status page at *http://<hostname>/nginx_status*
+The main config file is `emailer.conf` in `/etc/nginx/sites-enabled`.  It includes snippets from the `/etc/nginx/snippets/` directory of the form `emailer_<something>.conf`.  One example is `emailer_nginx_status.conf` which provides the standard nginx status page at **http://<hostname>/nginx_status**
 
 ### mariadb
 
@@ -176,10 +181,13 @@ Installs nzedb, creates and populates database.
 > * `nntp_socket_timeout` 120
 >
 > **IRC Scraper configuration**
-> * `irc_username`        (pulls from `vault_irc_username`)
-> * `irc_nickname`        (pulls from `vault_irc_nickname`)
-> * `irc_realname`        (pulls from `vault_irc_realname`)
-> * `irc_password`        (pulls from `vault_irc_password`)
+> It's recommended that you set up ZNC somewhere, and put your settings to connect to ZNC here.  The ZNC server should connect to *irc.synirc.com* on port 6697 (SSL), and join the *#nZEDbPRE*, *#nZEDbPRE2* and *#PreNNTmux* channels.
+
+> If you're not using ZNC, then put in reasonable values for *username*, *nickname* etc.
+> * `irc_username`        (pulls from `vault_irc_username` or defaults to _george_)
+> * `irc_nickname`        (pulls from `vault_irc_nickname` or defaults to _george_)
+> * `irc_realname`        (pulls from `vault_irc_realname` or defaults to _George of the Jungle_)
+> * `irc_password`        (pulls from `vault_irc_password` or defaults to _george_)
 > * `irc_server`          (pulls from `vault_irc_server` or defaults to _irc.synirc.net_)
 > * `irc_port`            (pulls from `vault_irc_port` or defaults to 6697 for SSL)
 > * `irc_tls`             true
@@ -202,7 +210,7 @@ Installs nzedb, creates and populates database.
 >
 > **Mysql configs**
 > * `nzedb_mysql_dbname`      nzedb
-> * `nzedb_mysql_pass`        fcrnjmiervwn  << do change this ...
+> * `nzedb_mysql_pass`        fcrnjmiervwn  << **do change this** ...
 > * `innodb_buffer_percent`   for *innodb_buffer_pool_size* - defaults to 70% of available ram
 > * `innodb_buffer_pool_instances` defaults to about 1-2g of buffer_pool_size per instance
 > * `innodb_additional_mem_pool_size` 20M
@@ -218,7 +226,7 @@ Installs nzedb, creates and populates database.
 >
 > **Custom settings**
 >
-> This is list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
+> This is a list of other settings in the settings table that can be configured.  You can add whatever setting to this list as you please.  The ones already there are some reasonable examples.  You can see the setting descriptions with something like
 
 ```
 mysql nzedb -e "select setting,value,hint from settings where setting like '%lookuppar2%';"
