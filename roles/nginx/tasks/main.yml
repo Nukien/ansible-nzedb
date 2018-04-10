@@ -97,7 +97,7 @@
     - { src: htpasswd.j2,  dest: '/etc/nginx/.htpasswd', mode: 'u=rwx,g=-rwx,o=-rwx' }
   notify: Restart Nginx
 
-- name: Copy port 80 config file (no ssl certs defined)
+- name: Copy port 80 config file when using SSL to redirect to port 443
   template:
     src:  "{{ item.src }}"
     dest: "{{ item.dest }}"
