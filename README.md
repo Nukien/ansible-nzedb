@@ -181,8 +181,9 @@ Installs nzedb, creates and populates database.
 > * `nntp_socket_timeout` 120
 >
 > **IRC Scraper configuration**
+>
 > It's recommended that you set up ZNC somewhere, and put your settings to connect to ZNC here.  The ZNC server should connect to *irc.synirc.com* on port 6697 (SSL), and join the *#nZEDbPRE*, *#nZEDbPRE2* and *#PreNNTmux* channels.
-
+>
 > If you're not using ZNC, then put in reasonable values for *username*, *nickname* etc.
 > * `irc_username`        (pulls from `vault_irc_username` or defaults to _george_)
 > * `irc_nickname`        (pulls from `vault_irc_nickname` or defaults to _george_)
