@@ -116,7 +116,7 @@ Nginx will use this cert, and will also create a `port80.conf` file listening on
 
 > ##### Variables `roles/certs/defaults/main.yml`
 > * `ssl_certs_key_size` 4096
-> * `ssl_certs_generate_dh_param` false - set to `true` to generate a strong DHE parameter file.  _NOTE:_ this can take quite a while ...
+> * `ssl_certs_generate_dh_param` false - set to `true` to generate a strong DHE parameter file.  _NOTE_: this can take quite a while ...
 > * `ssl_certs_...` Set cert contents (country, state etc.) to appropriate values
 
 ### nginx
@@ -132,9 +132,9 @@ The main config file is `emailer.conf` in `/etc/nginx/sites-enabled`.  It includ
 
 ### mariadb
 
-Installs and configures a basic nZEDb-ready mysql database.  NOTE: this is a generic install - your own tuning will be heavily dependent on your site, number of groups etc.  Consider this only a base to start from.  It will get nZEDb up and running ... but you _WILL_ have to properly tune the database for your specific environment.
+Installs and configures a basic nZEDb-ready mysql database.  _NOTE:_ this is a generic install - your own tuning will be heavily dependent on your site, number of groups etc.  Consider this only a base to start from.  It will get nZEDb up and running ... but you _WILL_ have to properly tune the database for your specific environment.
 
-*NOTE* There are additional mysql tuning parameters to set in the nZEDb role section below.
+*NOTE:* There are additional mysql tuning parameters to set in the nZEDb role section below.
 
 > ##### Variables `roles/mariadb/defaults/main.yml`
 > * `mysql_root_pass`  (pulls from `vault_mysql_root_pass` or has a default)
@@ -169,7 +169,7 @@ Installs sphinxsearch.
 
 ### nzedb
 
-Installs nzedb, creates and populates database.
+Installs nzedb, creates and populates database, configures sphinx and nginx.
 
 > ##### Variables `roles/nzedb/defaults/main.yml`
 > **NNTP server configuration**
