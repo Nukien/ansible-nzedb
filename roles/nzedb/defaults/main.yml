@@ -38,6 +38,18 @@ nzbpath: /var/www/nzedb/resources/nzb/
 coverspath: /var/www/nzedb/resources/covers/
 tmpunrarpath: /var/www/nzedb/resources/tmp/unrar/
 
+########## Backup info for /usr/local/bin/backup_nzedb.sh
+# Source pool holding nzedb and files
+nzedb_src_pool: nzedb
+# Destination pool for backup
+nzedb_dst_pool: zedback
+# Backup location if mysql is NOT a zfs dataset
+nzedb_backup_dir: /Backups
+# zfs pool for mysql if database is in a zfs dataset
+nzedb_mysql_zfs_pool:
+# zfs dataset name for mysql
+nzedb_mysql_zfs_dataset:
+
 ########## API keys
 apikey_amazon_associate: "{{ vault_apikey_amazon_associate | default(omit) }}"
 apikey_amazon_private: "{{ vault_apikey_amazon_private | default(omit) }}"
@@ -177,6 +189,7 @@ nzedb_packages:
   - mytop
   - p7zip-full
   - percona-toolkit
+  - pv
   - python-dateutil
   - python-mysqldb
   - python-pip

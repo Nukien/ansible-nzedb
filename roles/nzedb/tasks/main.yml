@@ -85,7 +85,7 @@
 # on the root of this nginx server.
 # Copy emailer_nzedb.conf.j2 to /etc/nginx/snippets/emailer_nzedb.conf to have nzedb
 # available as /nzedb.  EG: http://my.server.com/nzedb
-- name: Copy nginx configuration files
+- name: Copy nginx configuration files and backup script
   template:
     src:  "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -93,6 +93,7 @@
   with_items:
     #- { src: nzedb_as_root.conf.j2,  dest: '/etc/nginx/conf.d/nzedb.conf', mode: 'u=rwx,g=rx,o=rx' }
     - { src: emailer_nzedb.conf.j2,  dest: '/etc/nginx/snippets/emailer_nzedb.conf', mode: 'u=rwx,g=rx,o=rx' }
+    - { src: backup_nzedb.sh.j2,  dest: '/usr/local/bin/backup_nzedb.sh', mode: 'u=rwx,g=rx,o=rx' }
   notify: Restart Nginx
 
 # Only need to reload php7.0-fpm if nzedb_php_settings.ini is changed/copied

@@ -70,6 +70,8 @@ The ugly systemd unit is needed for the tmpfs to ensure that it doesn't mount un
 
 If using ZFS, the above configuration has been verified to work.  The datasets mount in the correct order, and the tmpfs mounts after them.  Of course, this is just an example, you can use whatever systems and conventions you prefer for disk layout.
 
+You could also use a ZFS dataset for mysql, which makes for very efficient and fast backups.  See the `/usr/local/bin/backup_nzedb.sh` script installed by the nzedb role.  Google for the appropriate `zfs create` parameters for mysql.
+
 The nzedb role will set appropriate ownership permissions.
 
 ## Usage
@@ -198,6 +200,13 @@ Installs nzedb, creates and populates database, configures sphinx and nginx.
 > * `coverspath`          /var/www/nzedb/resources/covers/
 > * `tmpunrarpath`        /var/www/nzedb/resources/tmp/unrar/
 >
+> **Backup info for /usr/local/bin/backup_nzedb.sh**
+> * `nzedb_src_pool`      nzedb    (name of main zfs pool for nzedb)
+> * `nzedb_dst_pool`      zedback  (name of backup zfs pool)
+> * `nzedb_backup_dir`    /Backups (mysql backup location if NOT using zfs for mysql)
+> * `nzedb_mysql_zfs_pool`         (name of mysql zfs pool if using zfs for mysql)
+> * `nzedb_mysql_zfs_dataset`      (name of mysql dataset if using zfs for mysql)
+> 
 > **API keys**
 > * `apikey_amazon_associate` (pulls from `vault_apikey_amazon_associate`)
 > * `apikey_amazon_private`   (pulls from `vault_apikey_amazon_private`)
