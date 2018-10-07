@@ -1,0 +1,152 @@
+#!/bin/bash
+
+# Backs up an nZEDb system.  Several assumptions here :
+# ZFS is in use, with at least 3 datasets
+# {{nzedb_src_pool}}/nzedb  - nzedb install itself
+# {{nzedb_src_pool}}/covers - all covers, usually /var/www/nzedb/resources/covers/
+# {{nzedb_src_pool}}/nzb    - all nzb files (millions), usually /var/www/nzedb/resources/nzb/
+#
+# Though code is here to handle mysql in a zfs dataset, it currently uses
+# innobackupex to back mysql up into {{nzedb_backup_dir}}
+#
+# Snapshots are based on date of run, so only one backup per day unless changed
+# to use different data/time format - easy enough, look at new_snap below
+
+
+new_snap=$(date +"%F")
+
+# Source pool holding nzedb and files
+src_pool={{nzedb_src_pool}}
+
+# Destination pool for backup
+dst_pool={{nzedb_dst_pool}}
+
+# Which datasets to backup
+datasets="nzedb covers nzb"
+
+# Name of nzedb database - set in roles/nzedb/defaults/main.yml
+DBNAME={{nzedb_mysql_dbname}}
+
+# Backup location if mysql is NOT a zfs dataset
+backups={{nzedb_backup_dir}}
+
+# These are for when mysql is on a zfs pool/dataset
+# Will use snapshot_mysql() below
+db_pool={{nzedb_mysql_zfs_pool}}
+db_data={{nzedb_mysql_zfs_dataset}}
+
+backup_mysql() {
+    #
+    # Backup mysql
+    #
+    mkdir -p ${backups}/MySQL_${new_snap}
+    innobackupex --parallel=3 --no-timestamp --rsync ${backups}/MySQL_${new_snap} >> ${backups}/MySQL_${new_snap}.txt 2>&1
+    innobackupex --apply-log --export ${backups}/MySQL_${new_snap} >> ${backups}/MySQL_${new_snap}.txt 2>&1
+    gzip -9 ${backups}/MySQL_${new_snap}.txt
+}
+
+snapshot_mysql() {
+    # https://serverfault.com/questions/805257/backing-up-a-mysql-database-via-zfs-snapshots
+    
+    echo -n "    ${db_pool}/${db_data}@${new_snap} "
+    if [[ $(echo ${src_snaps} | grep -c "${db_pool}/${db_data}@${new_snap}") -eq 0 ]] ; then
+        echo "Missing - taking snapshot"
+        mysql_locked=/var/run/mysql_locked
+        
+        # flush & lock MySQL, touch mysql_locked, and wait until it is removed
+        mysql -NB <<-EOF &
+            flush tables with read lock;
+            delimiter ;;
+            system touch $mysql_locked
+            system while test -e $mysql_locked; do sleep 1; done
+            exit
+EOF
+        
+        # wait for the preceding command to touch mysql_locked
+        i=1
+        while ! test -e $mysql_locked; do
+    	    echo -en "\r--- Waiting for mysql to lock tables $i"
+            sleep 1
+            i=$(($i+1))
+        done
+        
+        # take a snapshot of the filesystem, while MySQL is being held locked
+        zfs snap ${db_pool}/${db_data}@${new_snap}
+        
+        # unlock MySQL
+        rm -f $mysql_locked
+
+    else
+        echo "OK, snapshot ${new_snap} already exists"
+    fi
+
+    if [ ${old_snap[$i]} != ${new_snap} ] ; then
+        echo "    ${db_pool}/${db_data}@${old_snap} -> ${dst_pool}/${db_data}@${new_snap}"
+        zfs send -RI ${db_pool}/${db_data}@${old_snap} ${db_pool}/${db_data}@${new_snap} | pv | sudo zfs recv -Fdvu ${dst_pool}
+    fi
+}
+
+backup_zfs () {
+    # zfs send -RvI nzedb/nzedb@2018-01-11 nzedb/nzedb@2018-02-09 | sudo zfs recv -Fdvu zedback
+
+    # Check if new_snap exists on src_pool, create if necessary
+    for dataset in ${datasets} ; do
+        echo -n "    ${src_pool}/${dataset}@${new_snap} "
+        if [[ $(echo ${src_snaps} | grep -c "${src_pool}/${dataset}@${new_snap}") -eq 0 ]] ; then
+            echo "Missing - taking snapshot"
+            zfs snap ${src_pool}/${dataset}@${new_snap}
+        else
+            echo "OK, snapshot ${new_snap} already exists"
+        fi
+    done
+
+    # Find last snapshot on dst_pool for each dataset
+    i=1
+    for dataset in ${datasets} ; do
+        old_snap[$i]=$(zfs list -H -o name -t snapshot -r "$dst_pool" | fgrep ${dataset} | tail --lines=1 | sed -e "s!${dst_pool}/${dataset}@\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)!\1!")
+        i=$(($i+1))
+    done
+
+    # Send new snaps to dst_pool if not already there
+    i=1
+    for dataset in ${datasets} ; do
+        if [ ${old_snap[$i]} != ${new_snap} ] ; then
+            echo "    ${src_pool}/${dataset}@${old_snap[$i]} -> ${dst_pool}/${dataset}@${new_snap}"
+            zfs send -RI ${src_pool}/${dataset}@${old_snap[$i]} ${src_pool}/${dataset}@${new_snap} | pv | sudo zfs recv -Fdvu ${dst_pool}
+        fi
+        i=$(($i+1))
+    done
+}
+
+echo "--- Pausing tmux for nzedb backup"
+mysql ${DBNAME} -e "update tmux set value = 0 where setting = 'running';"
+NZEDBPROCS=1
+while [ ${NZEDBPROCS} -ne 0 ]; do
+	NZEDBPROCS=`mysql -e "show processlist;" | grep ${DBNAME} | grep -v Sleep | wc -l`
+	echo -en "\r--> Waiting for mysql to finish ${DBNAME} queries - ${NZEDBPROCS} left   "
+	sleep 5
+done
+echo ""
+
+# Get list of snapshots in system - used in backup_zfs and snapshot_mysql
+src_snaps=$(zfs list -t snapshot -o name)
+
+echo "--- Kicking off zfs snapshots and send/recv to ${dst_pool}"
+backup_zfs &
+WAITPIDS="${WAITPIDS} "$!
+
+######## One or the other of snapshot_mysql or backup_mysql - using zfs or not ?
+# echo --- Kicking off mysql snapshot and send/recv to ${dst_pool}"
+# snapshot_mysql &
+
+echo "--- Kicking off mysql backup - watch ${backups}/MySQL_${new_snap}.txt"
+backup_mysql &
+WAITPIDS="${WAITPIDS} "$!
+
+echo "Waiting on backup functions ${WAITPIDS} to complete"
+wait ${WAITPIDS}
+
+echo "--- Re-starting tmux for nzedb"
+mysql ${DBNAME} -e "update tmux set value = 1 where setting = 'running';"
+
+
