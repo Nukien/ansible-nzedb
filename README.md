@@ -38,13 +38,13 @@ There are several directories that you should pre-create as separate filesystems
 * `/var/www/nzedb/resources/tmp/unrar`  Should be a tmpfs filesystem - used as tmp space for unrar
 * `/var/lib/mysql`                      Depends on how big your database gets
 
-For example, creating ZFS datasets might be something like (as root)
+For example, creating ZFS datasets might be something like the following.  This is supposing that you have SSH'd into your target box or are logged into it as `my_userid`.  The commands are run as root, and change ownership of the directories to your own `my_userid`.  You will want both user and group ownership to be to your userid.
 
 ```
 zfs create -o mountpoint=/var/www/nzedb poolname/nzedb
 zfs create -o mountpoint=/var/www/nzedb/resources/nzb poolname/nzbs
 zfs create -o mountpoint=/var/www/nzedb/resources/covers poolname/covers
-chown -R my_userid.my_userid /var/www/nzedb
+chown -R my_userid:my_userid /var/www/nzedb
 
 cat > /etc/systemd/system/var-www-nzedb-resources-tmp-unrar.mount << EOF
 [Unit]
@@ -80,7 +80,7 @@ Edit the `nzedb-hosts` file to put your new nZEDb box address.  This can be a re
 
 Check and update any variables in the individual role config files (`roles/ROLENAME/defaults/main.yml`)
 
-Run the playboox with
+Run the playbook with
 
 ```
 ./setup.sh full
@@ -139,7 +139,7 @@ Installs and configures a basic nZEDb-ready mysql database.  _NOTE:_ this is a g
 *NOTE:* There are additional mysql tuning parameters to set in the nZEDb role section below.
 
 > ##### Variables `roles/mariadb/defaults/main.yml`
-> * `mysql_root_pass`  (pulls from `vault_mysql_root_pass` or has a default)
+> * `mysql_root_pass`  (pulls from `vault_mysql_root_pass` or has a cheap and dirty default)
 > * `mysql_timezone`
 >
 > The rest of the variables can be left to the defaults.
