@@ -9,12 +9,11 @@
   
   - name: Install powerline
     apt:
-      name: "{{ item }}"
       state: present
-    with_items:
-      - git
-      - powerline
-      - fonts-powerline
+      name:
+        - git
+        - powerline
+        - fonts-powerline
     notify: Update fonts
   
   - name: Install Powerline fonts repo
@@ -49,7 +48,7 @@
     args:
       creates: /usr/share/consolefonts/ter-powerline-v12n.psf.gz
   
-  - name: Enable ter-powerline-v16n console font
+  - name: Enable ter-powerline-v16n console font in /etc/default/console-setup
     blockinfile:
       dest: /etc/default/console-setup
       insertafter: EOF
@@ -57,9 +56,20 @@
       block: |
         #
         # Using powerline font
-        FONT='ter-powerline-v16n.psf.gz'
+        FONT='ter-powerline-v20n.psf.gz'
         #
   
+  - name: Comment out old font definitions in /etc/default/console-setup
+    lineinfile:
+      path: /etc/default/console-setup
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      backrefs: yes
+    with_items:
+      - { regexp: '^CODESET=.*',  line: '# CODESET="guess"' }
+      - { regexp: '^FONTFACE=.*', line: '# FONTFACE="Fixed"' }
+      - { regexp: '^FONTSIZE=.*', line: '# FONTFACE="8x16"' }
+
   - name: Install Awesome Patched Fonts
     git:
       repo: https://github.com/gabrielelana/awesome-terminal-fonts
